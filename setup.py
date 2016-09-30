@@ -22,7 +22,8 @@ setup(
 	license = 'MIT',
 	entry_points = {'console_scripts': ['igdiscover = igdiscover.__main__:main']},
 	packages = ['igdiscover'],
-	package_data = {'igdiscover': ['igdiscover.yaml', 'Snakefile', 'empty.aux']},
+	package_data = {'igdiscover': ['igdiscover.yaml', 'Snakefile',
+		'empty.aux', 'report.html']},
 	install_requires = [
 		'sqt>=0.8.0',
 		'pandas>=0.16.2',
@@ -34,6 +35,7 @@ setup(
 		'scipy>=0.16.1',
 		'xopen>=0.1.1',
 		'ruamel.yaml',
+		'Jinja2',
 	],
 	classifiers = [
 		"Development Status :: 3 - Alpha",
