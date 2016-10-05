@@ -13,7 +13,8 @@ from igdiscover.utils import Config
 import numpy as np
 from sqt import FastaReader
 from igdiscover.dendrogram import PrefixComparer
-from plotly.tools import FigureFactory
+import ipdb; ipdb.set_trace()
+#from plotly.tools import FigureFactory
 from plotly.offline import plot
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
