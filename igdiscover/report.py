@@ -4,7 +4,7 @@ Create a report
 import sys
 import logging
 import pkg_resources
-from jinja2 import Template
+from jinja2 import Template, Environment, PackageLoader
 import json
 import base64
 
@@ -13,8 +13,7 @@ from igdiscover.utils import Config
 import numpy as np
 from sqt import FastaReader
 from igdiscover.dendrogram import PrefixComparer
-import ipdb; ipdb.set_trace()
-#from plotly.tools import FigureFactory
+from plotly.tools import FigureFactory
 from plotly.offline import plot
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
@@ -87,16 +86,31 @@ def dendrogram_plot(fasta_path, mark_path=None):
 	# fig.savefig(args.plot)
 
 
+def make_database_sizes_plot(stats):
+	y = [ it['size'] for it in stats['iterations'] ]
+	x = list(range(len(stats['iterations'])))
+	data = [dict(x=x, y=y)]
+	layout = dict(
+		margin=dict(t=0),
+		xaxis=dict(title='Iteration'),
+		yaxis=dict(title='No. of sequences'),
+	)
+
+	return dict(data=data, layout=layout)
+
+
+def tojson(o, indent=2):
+	return json.dumps(o, indent=indent)
 
 
 def main(args):
 	with open(args.stats) as f:
 		stats = json.load(f)
 	config = Config.from_default_path()
-	template_string = pkg_resources.resource_string('igdiscover', 'report.html').decode()
-	template = Template(template_string)
+	env = Environment(loader=PackageLoader('igdiscover', 'html'))
+	env.filters['tojson'] = tojson
+	template = env.get_template('report.html')
 	images = {'scilifelab_logo': data_uri('scilifelab-logo.png')}
-	print(template.render(stats=stats, config=config, images=images))
-
-
-
+	plots = dict()
+	plots['database_sizes'] = make_database_sizes_plot(stats)
+	print(template.render(stats=stats, config=config, images=images, plots=plots))
