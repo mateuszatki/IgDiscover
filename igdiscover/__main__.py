@@ -40,6 +40,7 @@ COMMANDS = [
 	#'multidiscover',
 	'germlinefilter',
 	'discover',
+	'discoverd',
 	'discoverj',
 	'clusterplot',
 	'errorplot',
