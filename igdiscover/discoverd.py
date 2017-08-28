@@ -2,11 +2,14 @@
 Discover D genes
 """
 import logging
+from collections import Counter
 import pandas as pd
 from sqt import FastaReader
 from sqt.align import edit_distance
 from .utils import Merger, merge_overlapping, unique_name, is_same_gene, slice_arg
 from .table import read_table
+from .discoverj import OverlappingSequenceMerger
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +18,12 @@ def add_arguments(parser):
 	arg = parser.add_argument
 	arg('--d-core', type=slice_arg, default=slice(2, -2),
 		help='D core region location. Default: %(default)s')
-	# arg('--database', metavar='FASTA',
-	# 	help='FASTA file with reference gene sequences')
+	arg('--top', metavar='N', type=int, default=500,
+		help='Use the N most common D core sequences. Default: %(default)s')
+	arg('--core-length', metavar='L', type=int, default=6,
+		help='Use only D core regions that have at least length L. Default: %(default)s')
+	arg('--database', metavar='FASTA',
+		help='FASTA file with known D gene sequences')
 	# arg('--merge', default=None, action='store_true', help='Merge overlapping genes. '
 	# 	'Default: Enabled for J, disabled for D and V.')
 	# arg('--no-merge', dest='merge', action='store_false', help='Do not merge overlapping genes')
@@ -163,22 +170,71 @@ def add_arguments(parser):
 # 			record.sequence,
 # 			sep='\t')
 
+def discard_substrings(seq_count_pairs):
+	# Sort by sequence length
+	# import ipdb; ipdb.set_trace()
+	seq_count_pairs = sorted(seq_count_pairs, key=lambda r: len(r[0]))
+	result = []
+	while seq_count_pairs:
+		seq, count = seq_count_pairs.pop()
+		# Keep only those candidates that are not substrings of seq
+		tmp = []
+		for s, n in seq_count_pairs:
+			if seq.find(s) != -1:
+				count += n
+			else:
+				tmp.append((s, n))
+		seq_count_pairs = tmp
+		result.append((seq, count))
+	return result
+
+
+def discard_known(seq_count_pairs, database):
+	result = []
+	for seq, count in seq_count_pairs:
+		for record in database:
+			if seq in record.sequence:
+				break
+		else:
+			# Not found in database, keep as candidate
+			result.append((seq, count))
+	return result
+
 
 def main(args):
-	usecols = ['D_errors', 'D_region']
+	if args.database:
+		with FastaReader(args.database) as fr:
+			database = list(fr)
+		logger.info('Read %d D sequences from %r', len(database), args.database)
+	else:
+		database = None
+	usecols = ['V_errors', 'D_errors', 'D_region']
 	table = read_table(args.table, usecols=usecols)
 	logger.info('Table with %s rows read', len(table))
-	table = table[table.D_errors == 0]
-	d_sequences = list(table['D_region'])
-	print(d_sequences[:10])
-	d_sequences = sorted(s[args.d_core] for s in d_sequences)
-	print(d_sequences[:10])
+	# table = table[table.V_errors == 0]
+	logger.info('Table with %s rows remains', len(table))
 
-	# TODO: now the 'uniq --count' step
-	#
+	d_sequences = list(table['D_region'])
+	d_sequences = sorted(s[args.d_core] for s in d_sequences)
+	d_sequences = [s for s in d_sequences if len(s) >= args.core_length]
+	counter = Counter(d_sequences)
+	candidates = counter.most_common()
+	candidates = [(s, n) for (s, n) in candidates if n > 1]
+	candidates = discard_substrings(candidates)
+
 	# TODO
-	#
-	# - extract 'core' of D region from the D_region column and sorts these sequences by frequency:
+	# merge overlapping sequences - or is that really necessary?
+	# perhaps it is sufficient to *not* use a D core region
+	if database is not None:
+		candidates = discard_known(candidates, database)
+
+	for seq, n in candidates:
+		print('{:30} {:6}'.format(seq, n))
+
+	#print(candidates)
+	# TODO
+	# - extract top 500
+	# - extract 'core' of D region from the D_region column and sorts these sequences by frequency
 	# - merge overlapping
 	# - allele ratio?
 	#
@@ -205,12 +261,6 @@ def main(args):
 	#
 	# - remove standalone merging script
 
-	# if args.database:
-	# 	with FastaReader(args.database) as fr:
-	# 		database = list(fr)
-	# 	logger.info('Read %d sequences from %r', len(database), args.database)
-	# else:
-	# 	database = None
 	# assert args.gene == 'D'
 	# column = 'D_region'
 	# other = 'V' if args.gene in ('D', 'J') else 'J'

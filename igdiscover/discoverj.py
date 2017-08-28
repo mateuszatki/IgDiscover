@@ -38,7 +38,7 @@ def add_arguments(parser):
 	arg('table', help='Table with parsed and filtered IgBLAST results')
 
 
-class SequenceInfo:
+class Candidate:
 	__slots__ = ('name', 'sequence', 'count', 'max_count', 'other_genes', 'db_name',
 		'db_distance', 'cdr3s')
 
@@ -58,7 +58,7 @@ class SequenceInfo:
 		return len(self.cdr3s)
 
 	def __repr__(self):
-		return 'SequenceInfo({sequence!r}, count={count}, max_count={max_count}, ...)'.format(**vars(self))
+		return 'Candidate({sequence!r}, count={count}, max_count={max_count}, ...)'.format(**vars(self))
 
 
 class OverlappingSequenceMerger(Merger):
@@ -72,7 +72,7 @@ class OverlappingSequenceMerger(Merger):
 		"""
 		m = merge_overlapping(s.sequence, t.sequence)
 		if m is not None:
-			return SequenceInfo(s.name, m, max_count=t.max_count + s.max_count)
+			return Candidate(s.name, m, max_count=t.max_count + s.max_count)
 
 		return None
 
@@ -159,7 +159,6 @@ def count_full_text_occurrences(candidates, table_path, other_gene, other_errors
 
 
 def print_table(records, other_gene):
-	# Print output table
 	print('name', 'count', other_gene + 's', 'CDR3s', 'database', 'database_diff', 'sequence', sep='\t')
 	for record in records:
 		print(record.name,
@@ -179,13 +178,7 @@ def main(args):
 		logger.info('Read %d sequences from %r', len(database), args.database)
 	else:
 		database = None
-	if args.gene == 'V':
-		column = 'V_nt'
-	elif args.gene == 'J':
-		column = 'J_nt'
-	else:
-		assert args.gene == 'D'
-		column = 'D_region'
+	column = {'V': 'V_nt', 'J': 'J_nt', 'D': 'D_region'}[args.gene]
 	other = 'V' if args.gene in ('D', 'J') else 'J'
 	other_gene = other + '_gene'
 	other_errors = other + '_errors'
@@ -198,30 +191,55 @@ def main(args):
 	if args.merge is None:
 		args.merge = args.gene == 'J'
 
+	def initial_vj_candidates(table, column):
+		for sequence, group in table.groupby(column):
+			if len(sequence) < MINIMUM_CANDIDATE_LENGTH:
+				continue
+			yield sequence, len(group)
+
+	def initial_d_candidates(table, column):
+		table['D_core'] = [s[args.d_core] for s in table[column]]
+
+		WORKING_HERE
+		d_sequences = sorted(s[args.d_core] for s in d_sequences)
+		d_sequences = [s for s in d_sequences if len(s) >= args.core_length]
+		counter = Counter(d_sequences)
+		candidates = counter.most_common()
+		candidates = [(s, n) for (s, n) in candidates if n > 1]
+		candidates = discard_substrings(candidates)
+
+		# TODO
+		# merge overlapping sequences - or is that really necessary?
+		# perhaps it is sufficient to *not* use a D core region
+		if database is not None:
+			candidates = discard_known(candidates, database)
+
+	if args.gene == 'D':
+		candidates_func = initial_d_candidates
+	else:
+		candidates_func = initial_vj_candidates
+
 	if args.merge:
 		logger.info('Merging overlapping sequences ...')
 		# Merge candidate sequences that overlap. If one candidate is longer than
 		# another, this is typically a sign that IgBLAST has not extended the
 		# alignment long enough.
 		merger = OverlappingSequenceMerger()
-		for sequence, group in table.groupby(column):
-			if len(sequence) < MINIMUM_CANDIDATE_LENGTH:
-				continue
-			merger.add(SequenceInfo(None, sequence, max_count=len(group)))
+		for sequence, count in candidates_func(table, column):
+			merger.add(Candidate(None, sequence, max_count=count))
 		logger.info('After merging overlapping %s sequences, %s remain', args.gene, len(merger))
 		candidates = list(merger)
 	else:
 		candidates = []
-		for sequence, group in table.groupby(column):
-			if len(sequence) < MINIMUM_CANDIDATE_LENGTH:
-				continue
-			candidates.append(SequenceInfo(None, sequence, max_count=len(group)))
+		for sequence, count in candidates_func(table, column):
+			candidates.append(Candidate(None, sequence, max_count=count))
 		logger.info('Collected %s unique %s sequences', len(candidates), args.gene)
 	del table
 
 	logger.info('Counting occurrences ...')
 	records = count_full_text_occurrences(candidates, args.table, other_gene, other_errors, args.merge)
 
+	logger.info('%d records', len(records))
 	# Assign names etc.
 	if database:
 		for record in records:
