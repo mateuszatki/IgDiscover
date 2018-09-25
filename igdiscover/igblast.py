@@ -31,6 +31,7 @@ import logging
 import tempfile
 import json
 import gzip
+import pandas as pd
 
 from xopen import xopen
 
@@ -61,6 +62,7 @@ def add_arguments(parser):
 		help='Sequence type. Default: %(default)s')
 	arg('--raw', metavar='FILE', help='Write raw IgBLAST output to FILE '
 			'(add .gz to compress)')
+	arg('--rawmap', metavar='FILE', help='Write mapping between renamed reads and raw reads (including consensus)')
 	arg('--limit', type=int, metavar='N',
 		help='Limit processing to first N records')
 	arg('--rename', default=None, metavar='PREFIX',
@@ -343,6 +345,7 @@ def main(args):
 	writer = TableWriter(sys.stdout)
 	start_time = time.time()
 	last_status_update = 0
+	raw_to_renamed = {}
 	with ExitStack() as stack:
 		if args.raw:
 			raw_output = stack.enter_context(xopen(args.raw, 'w'))
@@ -357,7 +360,9 @@ def main(args):
 				raw_output=raw_output, use_cache=config.use_cache):
 			n += 1
 			if args.rename is not None:
-				record.query_name = "{}seq{}".format(args.rename, n)
+                                newname = "{}seq{}".format(args.rename, n)
+                                raw_to_renamed[record.query_name] = newname
+                                record.query_name = newname
 			d = record.asdict()
 			if d['CDR3_aa']:
 				detected_cdr3s += 1
@@ -383,3 +388,6 @@ def main(args):
 		with open(args.stats, 'w') as f:
 			json.dump(stats, f)
 			print(file=f)
+		with open(args.rawmap, "w") as f:
+                    raw_to_renamed_df = pd.DataFrame.from_dict(raw_to_renamed, orient = 'index')
+                    raw_to_renamed_df.to_csv(f, header=False)

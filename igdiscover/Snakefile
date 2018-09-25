@@ -502,7 +502,8 @@ else:
 rule igdiscover_igblast:
 	output:
 		tabgz="{dir}/assigned.tab.gz",
-		json="{dir}/stats/assigned.json"
+		json="{dir}/stats/assigned.json",
+		rawmap="{dir}/raw-rename.map"
 	input:
 		fastagz=PREPROCESSED_READS,
 		db_v="{dir}/database/V.fasta",
@@ -518,7 +519,7 @@ rule igdiscover_igblast:
 	threads: 16
 	shell:
 		"time igdiscover igblast{params.sequence_type}{params.penalty}{params.rename} --threads={threads}"
-		"{params.species} --stats={output.json} {params.database} {input.fastagz} | "
+		"{params.species} --stats={output.json} --rawmap {output.rawmap} {params.database} {input.fastagz} | "
 		"{GZIP} 2>&1 > {output.tabgz} | tee {log} >&2"
 
 
