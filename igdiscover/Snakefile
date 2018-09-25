@@ -373,6 +373,7 @@ for ext in ('fasta', 'fastq'):
 				fastagz=PREPROCESSED_READS,
 				pdf="stats/groupsizes.pdf",
 				groups="reads/4-groups.tab.gz",
+				consensus_map="reads/4-consensus.map",
 				json="stats/groups.json"
 			input:
 				fastaq='reads/4-trimmed.{ext}.gz'.format(ext=ext), success='stats/trimming-successful'
@@ -387,7 +388,7 @@ for ext in ('fasta', 'fastq'):
 				race_arg = ' --trim-g' if config.race_g else ''
 				shell("igdiscover group{cdr3_arg} --json={output.json} --minimum-length={config.minimum_merged_read_length} "
 				      "--groups-output={output.groups} --barcode-length={config.barcode_length}{race_arg} "
-				      "--plot-sizes={output.pdf} {input.fastaq} 2> {log} | {GZIP} > {output.fastagz}")
+				      "--plot-sizes={output.pdf} --raw-consensus-map {output.consensus_map} {input.fastaq} 2> {log} | {GZIP} > {output.fastagz}")
 
 	else:
 		rule:

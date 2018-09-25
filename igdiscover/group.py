@@ -52,6 +52,7 @@ from collections import Counter, defaultdict
 from contextlib import ExitStack
 from itertools import islice
 import json
+import pandas as pd
 
 from sqt.align import consensus
 from sqt import SequenceReader
@@ -89,6 +90,8 @@ def add_arguments(parser):
 	arg('--barcode-length', '-b', type=int, default=12,
 		help="Length of barcode. Positive for 5' barcode, negative for 3' barcode. Default: %(default)s")
 	arg('--json', metavar="FILE", help="Write statistics to FILE")
+	arg('--raw-consensus-map', metavar="FILE",
+            help="Write mapping between consensus and raw reads used to build it")
 	arg('fastx', metavar='FASTA/FASTQ',
 		help='FASTA or FASTQ file (can be gzip-compressed) with sequences')
 
@@ -271,6 +274,7 @@ def main(args):
 		n_consensus = 0
 		n_ambiguous = 0
 		sizes = []
+		consensus_raw = {}
 		for barcode in sorted(barcodes):
 			sequences = barcodes[barcode]
 			if len(sequences) != len(set(s.name for s in sequences)):
@@ -309,7 +313,7 @@ def main(args):
 						if group_by_cdr3:
 							cdr3 = Counter(cl.cdr3 for cl in cluster).most_common(1)[0][0]
 						name = 'consensus{}'.format(n_consensus)
-
+						consensus_raw.setdefault(name,[]).extend([s.name.split()[0] for s in cluster])
 				name = name.split(maxsplit=1)[0]
 				if name.endswith(';'):
 					name = name[:-1]
@@ -319,7 +323,9 @@ def main(args):
 				else:
 					print('>{};barcode={};size={};\n{}'.format(name, barcode,
 						len(cluster), sequence))
-
+	with open(args.raw_consensus_map, 'w') as f:
+                consensus_mapping = pd.DataFrame.from_dict(consensus_raw, orient = 'index')
+                consensus_mapping.to_csv(f, header=False)
 	logger.info('%d clusters (%d singletons)', n_clusters, n_singletons)
 	logger.info('%d consensus sequences computed (from groups that had at least %d sequences)',
 		n_consensus + n_ambiguous, MIN_CONSENSUS_SEQUENCES)
