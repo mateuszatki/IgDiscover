@@ -34,6 +34,7 @@ from collections import namedtuple
 import pandas as pd
 from sqt import FastaReader
 from sqt.align import edit_distance
+import re
 
 from .utils import UniqueNamer, Merger, is_same_gene, ChimeraFinder
 
@@ -84,6 +85,8 @@ def add_arguments(parser):
 			'even if criteria for discarding them would apply (except cross-mapping artifact '
 			'removal, which is always performed).')
 	arg('--fasta', metavar='FILE', help='Write new database in FASTA format to FILE')
+	arg('-l', '--low-expressed', action='append',
+                help='List of low expressed genes')
 	arg('tables', metavar='CANDIDATES.TAB',
 		help='Tables (one or more) created by the "discover" command',
 		nargs='+')
@@ -293,6 +296,12 @@ def main(args):
 		whitelist.add_fasta(path)
 	logger.info('%d unique sequences in whitelist', len(whitelist))
 
+        # Is this pre-germline filter
+	pre = args.fasta.startswith('pre')
+        # Compile regex for low expressed alleles
+	low_expressed_regex = None
+	if args.low_expressed:
+                low_expressed_regex = re.compile('^({})'.format('|'.join(args.low_expressed)))
 	# Read in tables
 	total_unfiltered = 0
 	overall_table = None
@@ -309,9 +318,14 @@ def main(args):
 		table = table[table.database_diff >= args.minimum_db_diff]
 		if 'N_bases' in table.columns:
 			table = table[table.N_bases <= args.maximum_N]
-		table = table[table.CDR3s_exact >= args.unique_CDR3]
+		# If not first pre-filtering step  and if low_expressed defined
+		select_low_expressed = table.any(axis=1)
+		if not pre and args.low_expressed:
+                        select_low_expressed = table.name.apply(lambda s: (True & ('_S' not in s)) if low_expressed_regex.match(s) else False)
+                # If second filtering step and gene in low expressed list, only first filtering applies
+		table = table[((table.CDR3s_exact >= args.unique_CDR3) | select_low_expressed)]
 		table = table[table.CDR3_shared_ratio <= args.cdr3_shared_ratio]
-		table = table[table.Js_exact >= args.unique_J]
+		table = table[((table.Js_exact >= args.unique_J) | select_low_expressed)]
 		if not args.allow_stop:
 			table = table[(table.has_stop == 0) | (table.whitelist_diff == 0)]
 		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0)]

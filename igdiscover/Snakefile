@@ -663,6 +663,8 @@ def germlinefilter_criteria(wildcards, input):
 	criteria += ['--cdr3-shared-ratio={}'.format(conf['cdr3_shared_ratio'])]
 	criteria += ['--unique-D-ratio={}'.format(conf['unique_d_ratio'])]
 	criteria += ['--unique-D-threshold={}'.format(conf['unique_d_threshold'])]
+	if 'low_expressed' in conf:
+		criteria += ['-l {} '.format(allele) for allele in conf['low_expressed']]	
 	return ' '.join(criteria)
 
 

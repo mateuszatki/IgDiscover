@@ -204,7 +204,7 @@ germline_filter:
   cdr3_shared_ratio: 0.8     # Maximum allowed CDR3_shared_ratio
   unique_d_ratio: 0.3        # Minimum Ds_exact ratio between alleles
   unique_d_threshold: 10     # Check Ds_exact ratio only if highest-expressed allele has at least this Ds_exact count
-
+  low_expressed: ['IGHV1-45']
 
 ## J discovery settings
 
