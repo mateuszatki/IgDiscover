@@ -226,6 +226,9 @@ class Whitelist:
 			for record in fr:
 				self._sequences[record.sequence.upper()] = record.name
 
+	def exact_match(self, sequence):
+                return self._sequences.get(sequence, None)
+
 	def closest(self, sequence):
 		"""
 		Search for the whitelist sequence that is closest to the given sequence.
@@ -311,6 +314,12 @@ def main(args):
 		# whitelist_diff distinguishes between 0 and !=0 only
 		# at this point. Accurate edit distances are computed later.
 		whitelist_diff = [(0 if s in whitelist else -1) for s in table['consensus']]
+                # get original database names for exact consensus matches
+		whitelist_exact = table.consensus.apply(lambda x: whitelist.exact_match(x))
+		select_exact = list(map(lambda x: True if x is not None else False, whitelist_exact))
+                # update names to primary database if consensus matches exactly
+		table.name.update(whitelist_exact[select_exact])
+		table['original_db'] = select_exact
 		table.insert(i, 'whitelist_diff', pd.Series(whitelist_diff, index=table.index, dtype=int))
 		table.insert(i+1, 'closest_whitelist', pd.Series('', index=table.index))
 
@@ -323,9 +332,9 @@ def main(args):
 		if not pre and args.low_expressed:
                         select_low_expressed = table.name.apply(lambda s: (True & ('_S' not in s)) if low_expressed_regex.match(s) else False)
                 # If second filtering step and gene in low expressed list, only first filtering applies
-		table = table[((table.CDR3s_exact >= args.unique_CDR3) | select_low_expressed)]
+		table = table.loc[((table.CDR3s_exact >= args.unique_CDR3) | select_low_expressed),:]
 		table = table[table.CDR3_shared_ratio <= args.cdr3_shared_ratio]
-		table = table[((table.Js_exact >= args.unique_J) | select_low_expressed)]
+		table = table.loc[((table.Js_exact >= args.unique_J) | select_low_expressed),:]
 		if not args.allow_stop:
 			table = table[(table.has_stop == 0) | (table.whitelist_diff == 0)]
 		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0)]
