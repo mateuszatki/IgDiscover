@@ -305,8 +305,10 @@ def main(args):
 		whitelist.add_fasta(path)
 	logger.info('%d unique sequences in whitelist', len(whitelist))
 
-        # Is this pre-germline filter
-	pre = args.fasta.startswith('pre')
+	# Is this pre-germline filter
+	pre = False
+	if args.fasta:
+            pre = args.fasta.startswith('pre')
         # Compile regex for low expressed alleles
 	low_expressed_regex = None
 	if args.low_expressed:
@@ -338,9 +340,9 @@ def main(args):
 		if not pre and args.low_expressed:
                         select_low_expressed = table.name.apply(lambda s: (True & ('_S' not in s)) if low_expressed_regex.match(s) else False)
                 # If second filtering step and gene in low expressed list, only first filtering applies
-		table = table.loc[((table.CDR3s_exact >= args.unique_CDR3) | (select_low_expressed & table.CDR3s_exact >= config.pre_germline_filter['unique_cdr3s']) ),:]
+		table = table.loc[((table.CDR3s_exact >= args.unique_CDR3) | (select_low_expressed & (table.CDR3s_exact >= config.pre_germline_filter['unique_cdr3s']))),:]
 		table = table[table.CDR3_shared_ratio <= args.cdr3_shared_ratio]
-		table = table.loc[((table.Js_exact >= args.unique_J) | (select_low_expressed & table.Js_exact >= config.pre_germline_filter['unique_js'])),:]
+		table = table.loc[((table.Js_exact >= args.unique_J) | (select_low_expressed & (table.Js_exact >= config.pre_germline_filter['unique_js']))),:]
 		if not args.allow_stop:
 			table = table[(table.has_stop == 0) | (table.whitelist_diff == 0)]
 		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0)]
