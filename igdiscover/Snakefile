@@ -147,7 +147,7 @@ elif config.merge_program == 'pear':
 			log='reads/2-pear.log'
 		input: 'reads/1-limited.1.fastq.gz', 'reads/1-limited.2.fastq.gz'
 		resources: time=60
-		threads: 16
+		threads: 24
 		shell:
 			"time pear -j {threads} -f {input[0]} -r {input[1]} -o reads/2-pear | tee {output.log}\n"
 			"for n in unassembled.forward unassembled.reverse assembled discarded; do "
@@ -526,7 +526,7 @@ rule igdiscover_igblast:
 		sequence_type=' --sequence-type={}'.format(config.sequence_type),
 		rename=' --rename {path!r}_'.format(path=os.path.basename(os.getcwd())) if config.rename else ''
 	log: '{dir}/igblast.log'
-	threads: 16
+	threads: 24
 	shell:
 		"time igdiscover igblast{params.sequence_type}{params.penalty}{params.rename} --threads={threads}"
 		"{params.species} --stats={output.json} {params.database} {input.fastagz} | "
