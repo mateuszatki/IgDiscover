@@ -60,6 +60,9 @@ def add_arguments(parser):
 	arg('--minimum-db-diff', '-b', type=int, metavar='N', default=0,
 		help='Sequences must have at least N differences to the database '
 		'sequence. Default: %(default)s')
+	arg('--maximum-db-diff', '-x', type=int, metavar='N', default=-1,
+		help='Sequences have at most that many differences to the database '
+		'sequence. Default: %(default)s. Negative is disabled.')
 	arg('--maximum-N', '-N', type=int, metavar='COUNT', default=0,
 		help='Sequences must have at most COUNT "N" bases. Default: %(default)s')
 	arg('--unique-CDR3', '--CDR3s', type=int, metavar='N', default=1,
@@ -335,6 +338,8 @@ def main(args):
 		table = table[table.database_diff >= args.minimum_db_diff]
 		if 'N_bases' in table.columns:
 			table = table[table.N_bases <= args.maximum_N]
+		if ('database_diff' in table.columns) and (args.maximum_db_diff > 0):
+			table = table[table.database_diff <= args.maximum_db_diff]
 		# If not first pre-filtering step  and if low_expressed defined
 		select_low_expressed = table.any(axis=1)
 		if not pre and args.low_expressed:
