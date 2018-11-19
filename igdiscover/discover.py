@@ -345,7 +345,9 @@ class Discoverer:
 				('exact', group_exact_v))
 			del sibling_no_cdr3
 
-			other_cdr3_counts = self.cdr3_counts - Counter(s for s in sibling_info.group.CDR3_nt if s)
+			group_cdr3s = Counter(s for s in group.CDR3_nt if s)
+			other_cdr3_counts = self.cdr3_counts - group_cdr3s
+
 			info = dict()
 			for key, g in groups:
 				cdr3_counts = Counter(s for s in g.CDR3_nt if s)
