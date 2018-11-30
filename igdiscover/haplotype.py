@@ -25,6 +25,7 @@ EXPRESSED_RATIO = 0.1
 def add_arguments(parser: ArgumentParser):
 	arg = parser.add_argument
 	arg('--v-gene', help='V gene to use for haplotyping J. Default: Auto-detected')
+	arg('--j-gene', help='J gene to use for haplotyping V. Default: Auto-detected')
 	arg('--d-evalue', type=float, default=1E-4,
 		help='Maximal allowed E-value for D gene match. Default: %(default)s')
 	arg('--d-coverage', '--D-coverage', type=float, default=65,
@@ -37,6 +38,10 @@ def add_arguments(parser: ArgumentParser):
 			'the given FASTA file.')
 	arg('--plot', metavar='FILE', default=None,
 		help='Write a haplotype plot to FILE')
+	arg('--show-unknown', action='store_true', default=True,
+		help='Whether to sahow genes with unknown haplotype')
+	arg('--haplo', metavar='haplo', default=None,
+		help='Write haplotype table in parsable TSV format')
 	arg('--structure-plot', metavar='FILE', default=None,
 		help='Write a haplotype structure plot (counts binarized 0 and 1) to FILE')
 	arg('table', help='Table with parsed and filtered IgBLAST results')
@@ -307,13 +312,14 @@ def read_and_filter(path: str, d_evalue: float, d_coverage: float):
 	logger.info('%s rows remain after requiring V errors = 0', len(table))
 	table = table[table.J_errors == 0]
 	logger.info('%s rows remain after requiring J errors = 0', len(table))
-	table = table[table.D_evalue <= d_evalue]
-	logger.info('%s rows remain after requiring D E-value <= %s', len(table), d_evalue)
-	table = table[table.D_covered >= d_coverage]
-	logger.info('%s rows remain after requiring D coverage >= %s', len(table), d_coverage)
-	if 'D_errors' in table.columns:
-		table = table[table.D_errors == 0]
-		logger.info('%s rows remain after requiring D errors = 0', len(table))
+# Disable D filtering to match plotallele module with counts
+#	table = table[table.D_evalue <= d_evalue]
+#	logger.info('%s rows remain after requiring D E-value <= %s', len(table), d_evalue)
+#	table = table[table.D_covered >= d_coverage]
+#	logger.info('%s rows remain after requiring D coverage >= %s', len(table), d_coverage)
+#	if 'D_errors' in table.columns:
+#		table = table[table.D_errors == 0]
+#		logger.info('%s rows remain after requiring D errors = 0', len(table))
 	return table
 
 
@@ -359,6 +365,17 @@ def main(args):
 			logger.error('The gene or allele %s was not found in the list of heterozygous V genes. '
 				'It cannot be used with the --v-gene option.', args.v_gene)
 			sys.exit(1)
+
+	if args.j_gene:
+               het_ex = [e for e in expressions['J'] if len(e) == 2]
+               for ex in het_ex:
+                       if (args.j_gene in ex.index and not ex.loc[args.j_gene].empty) or (args.j_gene in ex['name'].values):
+                               het_expressions['J'] = [ex]
+                               break
+               else:
+                       logger.error('The gene or allele %s was not found in the list of heterozygous J genes. '
+                               'It cannot be used with the --j-gene option.', args.j_gene)
+                       sys.exit(1)
 
 	block_lists = []
 
@@ -446,13 +463,18 @@ def main(args):
 
 	# Print the table
 	header = True
+	if args.haplo:
+                block_list = [b.to_tsv(header=header) for b in blocks]
+                with open(args.haplo, 'wt') as fout:
+                        fout.write('\n'.join(block_list))
+
 	for block in blocks:
 		print(block.to_tsv(header=header))
 		header = False
 
 	# Create plots if requested
 	if args.plot:
-		fig = plot_haplotypes(blocks, show_unknown=True)
+		fig = plot_haplotypes(blocks, show_unknown=args.show_unknown)
 		fig.savefig(args.plot)
 	if args.structure_plot:
 		fig = plot_haplotypes(blocks, binarize=True)
