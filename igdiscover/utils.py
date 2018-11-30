@@ -94,7 +94,7 @@ def consensus(aligned, threshold=0.7, ambiguous='N', keep_gaps=False):
 
 
 def iterative_consensus(sequences, program='muscle-medium', threshold=0.6,
-		subsample_size=200, maximum_subsample_size=1600):
+		subsample_size=500, maximum_subsample_size=1600):
 	"""
 	Compute a consensus sequence of the given sequences, but do not use all
 	sequences if there are many: First, try to compute the consensus from a
