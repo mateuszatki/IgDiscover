@@ -33,6 +33,7 @@ class Config:
 		self.barcode_length = 0
 		self.barcode_consensus = True
 		self.iterations = 1
+		self.haplotype = False
 		self.ignore_j = False
 		self.d_coverage = 70
 		self.subsample = 1000

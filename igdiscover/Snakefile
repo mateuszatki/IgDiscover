@@ -48,6 +48,8 @@ if config.iterations >= 1:
 
 FINAL_TARGETS = expand('final/{path}', path=ITERATION_TARGETS) + ['stats/stats.json']
 
+if config.haplotype:
+	FINAL_TARGETS += ['final/haploplot.png']
 
 rule all:
 	input:
@@ -760,6 +762,18 @@ rule dendrogram:
 		'igdiscover dendrogram --mark database/{wildcards.gene}.fasta {input.fasta} {output.pdf}'
 
 
+if config.haplotype:
+	rule haplotype:
+		"""Run haplotype analysis"""
+		output:
+			haploplot='final/haploplot.png',
+			haplotable='final/haplotable.tsv',
+			log='final/haplotype.log'
+		input:
+			filtered='final/filtered.tab.gz'
+		shell:
+			"igdiscover haplotype --plot={output.haploplot} {input.filtered} 2> "
+			">(tee {output.log} >&2) > {output.haplotable}"
 rule version:
 	output: txt='stats/version.txt'
 	run:

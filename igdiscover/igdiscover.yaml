@@ -1,6 +1,9 @@
 ## IgDiscover configuration
 
 
+# If to run haplotype analysis
+haplotype: false
+
 # How many discovery iterations to run. If 0, no updated database is created,
 # but expression profiles are still computed. Unless working with a highly
 # incomplete starting database, a single iteration is usually sufficient.
