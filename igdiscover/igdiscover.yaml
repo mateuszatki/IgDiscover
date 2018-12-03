@@ -164,7 +164,7 @@ ignore_j: false
 # When clustering sequences to discover new genes, subsample to this number of
 # sequences. Higher is slower.
 #
-subsample: 1000
+subsample: 2000
 
 
 # When computing the Ds_exact column, consider only D hits that
