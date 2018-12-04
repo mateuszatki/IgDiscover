@@ -208,10 +208,12 @@ class SequenceMerger(Merger):
 		# whitelisted, one needs to be discarded.
 		if s.whitelisted and t.whitelisted:
 			return None  # keep both
-		if s.whitelisted:
-			return s
-		if t.whitelisted:
-			return t
+		if s.whitelisted or t.whitelisted:
+			# Other rule to decide which to keep, if either is whitelisted
+                        if s.cluster_size >= t.cluster_size:
+                                return s
+                        else:
+                                return t
 
 		# No sequence is whitelisted if we arrive here
 		if s.clonotypes >= t.clonotypes:
