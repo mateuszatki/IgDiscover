@@ -209,12 +209,20 @@ class SequenceMerger(Merger):
 		if s.whitelisted and t.whitelisted:
 			return None  # keep both
 		if s.whitelisted or t.whitelisted:
-			# Other rule to decide which to keep, if either is whitelisted
-                        if s.cluster_size >= t.cluster_size:
-                                return s
-                        else:
-                                return t
-
+			# Rule to decide which to keep, if either is whitelisted
+			seqdict = {s: s.cluster_size, t: t.cluster_size}
+			u, v = min(seqdict, key=seqdict.get), max(seqdict, key=seqdict.get)
+			# If smaller cluster is less than fraction of a bigger
+			if (seqdict[u] / seqdict[v]) < 0.5:
+                                # Return bigger
+                                return v
+                        # Else clusters, are enough of similar size
+                        # Use old rule and return whitelisted one
+			else:
+                                if s.whitelisted:
+                                        return s
+                                else:
+                                        return t
 		# No sequence is whitelisted if we arrive here
 		if s.clonotypes >= t.clonotypes:
 			return s
