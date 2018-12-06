@@ -335,12 +335,6 @@ def main(args):
 		# whitelist_diff distinguishes between 0 and !=0 only
 		# at this point. Accurate edit distances are computed later.
 		whitelist_diff = [(0 if s in whitelist else -1) for s in table['consensus']]
-                # get original database names for exact consensus matches
-		whitelist_exact = table.consensus.apply(lambda x: whitelist.exact_match(x))
-		select_exact = list(map(lambda x: True if x is not None else False, whitelist_exact))
-                # update names to primary database if consensus matches exactly
-		table.name.update(whitelist_exact[select_exact])
-		table['original_db'] = select_exact
 		table.insert(i, 'whitelist_diff', pd.Series(whitelist_diff, index=table.index, dtype=int))
 		table.insert(i+1, 'closest_whitelist', pd.Series('', index=table.index))
 
@@ -424,7 +418,16 @@ def main(args):
 
 	# Discard chimeric sequences
 	# if not args.allow_chimeras:
-	#   overall_table = overall_table[~is_chimera(overall_table, whitelist)].copy()
+        #   overall_table = overall_table[~is_chimera(overall_table, whitelist)].copy()
+
+        # Update original database names for exact consensus matches
+	updated_table = []
+	for ind, row in overall_table.iterrows():
+                m = whitelist.exact_match(row['consensus'])
+                if m:
+                        row['name'] = m
+                updated_table.append(row)
+	overall_table = pd.DataFrame.from_records(updated_table)
 
 	print(overall_table.to_csv(sep='\t', index=False, float_format='%.2f'), end='')
 
