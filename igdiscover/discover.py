@@ -92,7 +92,7 @@ def add_arguments(parser):
 
 
 Groupinfo = namedtuple('Groupinfo',
-	'count unique_D unique_J unique_CDR3 shared_CDR3_ratio clonotypes read_names unique_barcodes')
+	'count unique_D unique_J unique_CDR3 shared_CDR3_ratio CDR3_len_maxfreq clonotypes read_names unique_barcodes')
 
 SiblingInfo = namedtuple('SiblingInfo', 'sequence requested name group')
 
@@ -349,6 +349,13 @@ class Discoverer:
 			info = dict()
 			for key, g in groups:
 				cdr3_counts = Counter(s for s in g.CDR3_nt if s)
+				cdr3_common_lengths = Counter(len(s) for s in g.CDR3_nt if s)
+				cdr3_all_count = len([s for s in g.CDR3_nt if s])
+				if cdr3_all_count > 0:
+                                        cdr3_most_common_length = cdr3_common_lengths.most_common(1)[0][1]
+                                        cdr3_most_common_length_frequency = cdr3_most_common_length/cdr3_all_count
+				else:
+                                        cdr3_most_common_length_frequency = -1
 				unique_cdr3 = len(cdr3_counts)
 				shared_cdr3_ratio = len(other_cdr3_counts & cdr3_counts) / unique_cdr3 if unique_cdr3 > 0 else 0
 				unique_j = len(set(s for s in g.J_gene if s))
@@ -359,6 +366,7 @@ class Discoverer:
 				read_names = list(g.name)
 				info[key] = Groupinfo(count=count, unique_D=unique_d, unique_J=unique_j,
 					unique_CDR3=unique_cdr3, shared_CDR3_ratio=shared_cdr3_ratio,
+                                        CDR3_len_maxfreq=cdr3_most_common_length_frequency,
 					clonotypes=clonotypes, read_names=read_names,
 					unique_barcodes=unique_barcodes)
 			if gene in self.database:
@@ -397,6 +405,7 @@ class Discoverer:
 				clonotypes=info['exact'].clonotypes,
 				CDR3_exact_ratio=ratio,
 				CDR3_shared_ratio=info['window'].shared_CDR3_ratio,
+                                CDR3_len_maxfreq=info['exact'].CDR3_len_maxfreq,
 				N_bases=n_bases,
 				database_diff=database_diff,
 				database_changes=database_changes,
@@ -425,6 +434,7 @@ class Candidate(namedtuple('_Candidate', [
 	'clonotypes',
 	'CDR3_exact_ratio',
 	'CDR3_shared_ratio',
+        'CDR3_len_maxfreq',
 	'N_bases',
 	'database_diff',
 	'database_changes',
@@ -436,7 +446,7 @@ class Candidate(namedtuple('_Candidate', [
 	def formatted_dict(self):
 		d = self._asdict()
 		d['has_stop'] = int(d['has_stop'])
-		for name in 'CDR3_exact_ratio', 'CDR3_shared_ratio':
+		for name in ['CDR3_exact_ratio', 'CDR3_shared_ratio', 'CDR3_len_maxfreq']:
 			d[name] = '{:.2f}'.format(d[name])
 		del d['read_names']
 		return d
