@@ -772,9 +772,10 @@ if config.plotallele:
 		input:
 			filtered='final/filtered.tab.gz'
 		params:
-			allele_list = ','.join(config.plotallele_j_gene)
+			allele_list = ','.join(["'{}'".format(s) for s in config.plotallele_j_gene if s]),
+			gene_order = 'database/order.fasta'
 		shell:
-			"igdiscover plotalleles {params.allele_list} {input.filtered} {output.plot} 2> "
+			"igdiscover plotalleles --order {params.gene_order} {params.allele_list} {input.filtered} {output.plot} 2> "
 			"{output.log}"
 
 if config.haplotype:
@@ -788,9 +789,10 @@ if config.haplotype:
 			filtered='final/filtered.tab.gz'
 		params:
 			vg_arg=['--v-gene {} '.format(vg) for vg in config.haplotype_v_gene if vg],
-			jg_arg=['--j-gene {} '.format(jg) for jg in config.haplotype_j_gene if jg]
+			jg_arg=['--j-gene {} '.format(jg) for jg in config.haplotype_j_gene if jg],
+			gene_order = 'database/order.fasta'
 		shell:
-			"igdiscover haplotype --plot={output.haploplot} {params.vg_arg} {params.jg_arg} {input.filtered} 2> "
+			"igdiscover haplotype --order {params.gene_order} --plot={output.haploplot} {params.vg_arg} {params.jg_arg} {input.filtered} 2> "
 			">(tee {output.log} >&2) > {output.haplotable}"
 
 rule version:

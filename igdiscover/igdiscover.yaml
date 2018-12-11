@@ -10,7 +10,7 @@
 
 haplotype: false
 haplotype_v_gene: ['IGHV3-48', 'IGHV3-49']
-haplotype_v_gene: ['']
+haplotype_j_gene: ['']
 plotallele: false
 plotallele_j_gene: ['IGHJ6*02', 'IGHJ6*03']
 

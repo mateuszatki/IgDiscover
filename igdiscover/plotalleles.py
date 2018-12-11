@@ -91,7 +91,7 @@ def main(args):
 		gene_order = {name: index for index, name in enumerate(ordered_names)}
 
 		def orderfunc(full_name):
-			name, _, allele = full_name.partition('*')
+			name, _, allele = full_name.split('_S',1)[0].partition('*')
 			allele = int(allele)
 			try:
 				index = gene_order[name]
