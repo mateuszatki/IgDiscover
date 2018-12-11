@@ -3,11 +3,16 @@
 
 # Haplotype module specific parameters
 # haplotype: true/false if to run haplotype module
-# haplotype_v_gene: which v_gene to use for haplotyping (overrides detection)
-#
+# haplotype_v_gene: which v_gene to use for haplotyping (empty automatic)
+# haplotype_j_gene: which j_gene to ue for haplotyping (empty automatic)
+# plotallele: true/false if to run plotalleles module
+# plotallele_j_gene: which j_gene to use for haplotyping (default IGHJ6*02 and IGHJ6*03)
 
 haplotype: false
 haplotype_v_gene: ['IGHV3-48', 'IGHV3-49']
+haplotype_v_gene: ['']
+plotallele: false
+plotallele_j_gene: ['IGHJ6*02', 'IGHJ6*03']
 
 # How many discovery iterations to run. If 0, no updated database is created,
 # but expression profiles are still computed. Unless working with a highly

@@ -35,6 +35,9 @@ class Config:
 		self.iterations = 1
 		self.haplotype = False
 		self.haplotype_v_gene = ['']
+		self.haplotype_j_gene = ['']
+		self.plotallele = False
+		self.plotallele_j_gene = ['IGHJ6*03', 'IGHJ6*02']
 		self.ignore_j = False
 		self.d_coverage = 70
 		self.subsample = 1000
