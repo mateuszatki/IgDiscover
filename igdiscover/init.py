@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def add_arguments(parser):
 	parser.add_argument('--database', '--db', metavar='PATH', default=None,
-		help='Directory with V.fasta, D.fasta and J.fasta files. If not given, a dialog is shown.')
+		help='Directory with V.fasta, D.fasta, J.fasta, V.csv and order.fasta files. If not given, a dialog is shown.')
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('--single-reads', default=None, metavar='READS',
 		help='File with single-end reads (.fasta.gz or .fastq.gz)')
@@ -327,6 +327,15 @@ def main(args):
 		with open(os.path.join(database_dir, gene + '.fasta'), 'w') as db_file:
 			for record in database[gene]:
 				print('>{}\n{}'.format(record.name, record.sequence), file=db_file)
+
+  # Copy order.fasta and V.csv files
+	aux_files = ['order.fasta', 'V.csv']
+	for f in aux_files:
+		path = os.path.join(dbpath, f)
+		if not os.path.exists(path):
+				logger.error("Database folder must contain auxiliary files {}".format(','.join(aux_files)))
+				sys.exit(1)
+		os.symlink(path, os.path.join(database_dir, f))
 
 	if gui is not None:
 		# Only suggest to edit the config file if at least one GUI dialog has been shown
