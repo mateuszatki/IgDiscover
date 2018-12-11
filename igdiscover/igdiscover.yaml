@@ -18,7 +18,7 @@ plotallele_j_gene: ['IGHJ6*02', 'IGHJ6*03']
 # but expression profiles are still computed. Unless working with a highly
 # incomplete starting database, a single iteration is usually sufficient.
 #
-iterations: 1
+iterations: 2
 
 
 # Type of sequences: Choose 'Ig' or 'TCR'.
@@ -39,7 +39,7 @@ barcode_length_5prime: 0
 # Currently, you cannot have a barcode in both ends, so at least one of the two settings
 # must be zero.
 #
-barcode_length_3prime: 0
+barcode_length_3prime: 21
 
 
 # When barcoding is enabled, sequences that have identical barcode and CDR3 are
