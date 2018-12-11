@@ -34,6 +34,7 @@ class Config:
 		self.barcode_consensus = True
 		self.iterations = 1
 		self.haplotype = False
+		self.haplotype_v_gene = ['']
 		self.ignore_j = False
 		self.d_coverage = 70
 		self.subsample = 1000

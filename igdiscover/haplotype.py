@@ -24,8 +24,10 @@ EXPRESSED_RATIO = 0.1
 
 def add_arguments(parser: ArgumentParser):
 	arg = parser.add_argument
-	arg('--v-gene', help='V gene to use for haplotyping J. Default: Auto-detected')
-	arg('--j-gene', help='J gene to use for haplotyping V. Default: Auto-detected')
+	arg('--v-gene', action='append',
+            help='V gene to use for haplotyping J. Default: Auto-detected')
+	arg('--j-gene', action='append',
+            help='J gene to use for haplotyping V. Default: Auto-detected')
 	arg('--d-evalue', type=float, default=1E-4,
 		help='Maximal allowed E-value for D gene match. Default: %(default)s')
 	arg('--d-coverage', '--D-coverage', type=float, default=65,
@@ -357,25 +359,36 @@ def main(args):
 
 	if args.v_gene:
 		het_ex = [e for e in expressions['V'] if len(e) == 2]
-		for ex in het_ex:
-			if (args.v_gene in ex.index and not ex.loc[args.v_gene].empty) or (args.v_gene in ex['name'].values):
-				het_expressions['V'] = [ex]
+		v_found = False
+		for v_gene in args.v_gene:
+			for ex in het_ex:
+				if (v_gene in ex.index and not ex.loc[v_gene].empty) or (v_gene in ex['name'].values):
+					het_expressions['V'] = [ex]
+					v_found = True
+					break
+			if v_found:
 				break
-		else:
-			logger.error('The gene or allele %s was not found in the list of heterozygous V genes. '
-				'It cannot be used with the --v-gene option.', args.v_gene)
+		if not v_found:
+			logger.error('Neither of gene or allele %s was found in the list of heterozygous V genes. '
+						 'It cannot be used with the --v-gene option.', ','.join(args.v_gene))
 			sys.exit(1)
 
+
 	if args.j_gene:
-               het_ex = [e for e in expressions['J'] if len(e) == 2]
-               for ex in het_ex:
-                       if (args.j_gene in ex.index and not ex.loc[args.j_gene].empty) or (args.j_gene in ex['name'].values):
-                               het_expressions['J'] = [ex]
-                               break
-               else:
-                       logger.error('The gene or allele %s was not found in the list of heterozygous J genes. '
-                               'It cannot be used with the --j-gene option.', args.j_gene)
-                       sys.exit(1)
+		het_ex = [e for e in expressions['J'] if len(e) == 2]
+		j_found = False
+		for j_gene in args.j_gene:
+			for ex in het_ex:
+				if (j_gene in ex.index and not ex.loc[j_gene].empty) or (args.j_gene in ex['name'].values):
+					het_expressions['J'] = [ex]
+					j_found = True
+					break
+			if j_found:
+				break
+		if not j_found:
+			logger.error('Neither of gene or allele %s was found in the list of heterozygous J genes. '
+						 'These cannot be used with the --j-gene option.', ','.join(args.j_gene))
+			sys.exit(1)
 
 	block_lists = []
 

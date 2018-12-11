@@ -668,7 +668,7 @@ def germlinefilter_criteria(wildcards, input):
 	criteria += ['--unique-D-ratio={}'.format(conf['unique_d_ratio'])]
 	criteria += ['--unique-D-threshold={}'.format(conf['unique_d_threshold'])]
 	if 'low_expressed' in conf:
-		criteria += ['-l {} '.format(allele) for allele in conf['low_expressed']]	
+		criteria += ['-l {} '.format(allele) for allele in conf['low_expressed']]
 	return ' '.join(criteria)
 
 
@@ -771,8 +771,10 @@ if config.haplotype:
 			log='final/haplotype.log'
 		input:
 			filtered='final/filtered.tab.gz'
+		params:
+			vg_arg=['--v-gene {} '.format(vg) for vg in config.haplotype_v_gene if vg]
 		shell:
-			"igdiscover haplotype --plot={output.haploplot} {input.filtered} 2> "
+			"igdiscover haplotype --plot={output.haploplot} {params.vg_arg} {input.filtered} 2> "
 			">(tee {output.log} >&2) > {output.haplotable}"
 rule version:
 	output: txt='stats/version.txt'

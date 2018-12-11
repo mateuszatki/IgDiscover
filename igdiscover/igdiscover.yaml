@@ -1,8 +1,13 @@
 ## IgDiscover configuration
 
 
-# If to run haplotype analysis
+# Haplotype module specific parameters
+# haplotype: true/false if to run haplotype module
+# haplotype_v_gene: which v_gene to use for haplotyping (overrides detection)
+#
+
 haplotype: false
+haplotype_v_gene: ['IGHV3-48', 'IGHV3-49']
 
 # How many discovery iterations to run. If 0, no updated database is created,
 # but expression profiles are still computed. Unless working with a highly
