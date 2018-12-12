@@ -344,7 +344,7 @@ def main(args):
 			table = table[table.N_bases <= args.maximum_N]
 		if ('database_diff' in table.columns) and (args.maximum_db_diff > 0):
 			table = table[table.database_diff <= args.maximum_db_diff]
-		# If not first pre-filtering step  and if low_expressed defined
+		# If not first pre-filtering step and if low_expressed defined
 		select_low_expressed = table.any(axis=1)
 		if not pre and args.low_expressed:
                         select_low_expressed = table.name.apply(lambda s: (True & ('_S' not in s)) if low_expressed_regex.match(s) else False)
@@ -354,7 +354,7 @@ def main(args):
 		table = table.loc[((table.Js_exact >= args.unique_J) | (select_low_expressed & (table.Js_exact >= config.pre_germline_filter['unique_js']))),:]
 		if not args.allow_stop:
 			table = table[(table.has_stop == 0) | (table.whitelist_diff == 0)]
-		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0)]
+		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0) | (select_low_expressed & (table.cluster_size >= config.pre_germline_filter['cluster_size']))]
 		table['database_changes'].fillna('', inplace=True)
 		table = table.dropna()
 		logger.info('Table read from %r contains %s candidate V gene sequences. '
