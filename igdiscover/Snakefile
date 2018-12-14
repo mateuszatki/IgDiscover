@@ -798,6 +798,7 @@ if config.haplotype:
 		"""Run haplotype analysis"""
 		output:
 			haploplot='final/haploplot.png',
+			haploplot_struct='final/haploplot_struct.png',
 			haplotable='final/haplotable.tsv',
 			log='final/haplotype.log'
 		input:
@@ -807,7 +808,8 @@ if config.haplotype:
 			jg_arg=['--j-gene {} '.format(jg) for jg in config.haplotype_j_gene if jg],
 			gene_order = 'database/order.fasta'
 		shell:
-			"igdiscover haplotype --order {params.gene_order} --plot={output.haploplot} {params.vg_arg} {params.jg_arg} {input.filtered} 2> "
+			"igdiscover haplotype --order {params.gene_order} --plot={output.haploplot} --structure-plot {output.haploplot_struct} "
+			" {params.vg_arg} {params.jg_arg} {input.filtered} 2> "
 			">(tee {output.log} >&2) > {output.haplotable}"
 
 rule version:
