@@ -44,7 +44,7 @@ TARGETS += [
 	'stats/stats_nofinal.json'
 ]
 if config.iterations >= 1:
-	TARGETS += ['iteration-01/new_J.fasta']
+	TARGETS += ['iteration-01/new_J.fasta', 'iteration-01/new_D.fasta']
 
 FINAL_TARGETS = expand('final/{path}', path=ITERATION_TARGETS) + ['stats/stats.json']
 
@@ -714,6 +714,22 @@ rule igdiscover_discover_j:
 		"--fasta={output.fasta} "
 		"{input.tab} > {output.tab}"
 
+rule igdiscover_discover_d:
+	"""Discover potential new D gene sequences"""
+	output:
+		tab="iteration-01/new_D.tab",
+		fasta="iteration-01/new_D.fasta",
+	input:
+		d_reference="iteration-01/database/D.fasta",
+		tab="iteration-01/filtered.tab.gz",
+	params:
+		allele_ratio='--allele-ratio={}'.format(config.d_discovery['allele_ratio']),
+		cross_mapping_ratio=' --cross-mapping-ratio={}'.format(config.d_discovery['cross_mapping_ratio'])
+	shell:
+		"time igdiscover discoverj --gene D {params.allele_ratio}{params.cross_mapping_ratio} "
+		"--database={input.d_reference} "
+		"--fasta={output.fasta} "
+		"{input.tab} > {output.tab}"
 
 rule stats_correlation_V_J:
 	output:

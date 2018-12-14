@@ -79,6 +79,8 @@ class Config:
 			unique_d_threshold=10
 		)
 		self.j_discovery = dict(allele_ratio=0.2, cross_mapping_ratio=0.1, propagate=True)
+		self.d_discovery = dict(allele_ratio=0.2, cross_mapping_ratio=0.1, propagate=True)
+
 		self.cdr3_location = 'detect'
 
 		self.read_from(file)
