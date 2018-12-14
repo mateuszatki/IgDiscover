@@ -1,6 +1,10 @@
 ## IgDiscover configuration
 
 
+# Upstream module
+# upstream: true/false if to run upstream module
+upstream: false
+
 # Haplotype module specific parameters
 # haplotype: true/false if to run haplotype module
 # haplotype_v_gene: which v_gene to use for haplotyping (empty automatic)

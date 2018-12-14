@@ -53,6 +53,9 @@ if config.haplotype:
 if config.plotallele:
 	FINAL_TARGETS += ['final/plotallele.png']
 
+if config.upstream:
+	FINAL_TARGETS += ['final/upstream.fasta']
+
 rule all:
 	input:
 		TARGETS + FINAL_TARGETS
@@ -762,6 +765,18 @@ rule dendrogram:
 		fasta='{dir}/database/{gene}.fasta'
 	shell:
 		'igdiscover dendrogram --mark database/{wildcards.gene}.fasta {input.fasta} {output.pdf}'
+
+if config.upstream:
+	rule upstream:
+		"""Run upstream module"""
+	     	output:
+			fasta='final/upstream.fasta',
+			log='final/upstream.log'
+		input:
+			filtered='final/filtered.tab.gz'
+		shell:
+			"igdiscover upstream {input.filtered} > {output.fasta} 2> "
+			"{output.log}"
 
 if config.plotallele:
 	rule plotallele:
