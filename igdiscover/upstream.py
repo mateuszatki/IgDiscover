@@ -9,6 +9,7 @@ Output a FASTA file that contains one consensus sequence for each gene.
 """
 import logging
 from collections import Counter
+import re
 
 from .table import read_table
 from .utils import iterative_consensus
@@ -41,11 +42,14 @@ def add_arguments(parser):
 		'gene match to analyze. Default: %(default)s')
 	arg('--debug', default=False, action='store_true',
 		help='Enable debugging output')
+	arg('--keep', default=True, action='store_true',
+		help='Whenever regex matches, keep sequence starting at ATG and in range of 53-63 residues from 3 prime end')
 	arg('table', help='Table with parsed IgBLAST results (assigned.tab.gz or '
 		'filtered.tab.gz)')
 
 
 def main(args):
+	keep = re.compile('.*(ATG[ATGC]{53-63})$')
 	if args.debug:
 		logging.getLogger().setLevel(logging.DEBUG)
 	table = read_table(args.table)
@@ -103,6 +107,10 @@ def main(args):
 			if args.no_ambiguous:
 				continue
 		n_written += 1
+                # Remove the region before ATG
+		m = keep.match(cons)
+		if m and args.keep:
+                    cons = cons.group(1)
 		print('>{} {}_consensus\n{}'.format(name, args.part, cons))
 
 	in_or_ex = 'excluding' if args.no_ambiguous else 'including'
