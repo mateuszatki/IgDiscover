@@ -687,11 +687,14 @@ rule igdiscover_germlinefilter:
 		db_whitelist=db_whitelist_or_not,
 		whitelist='whitelist.fasta' if os.path.exists('whitelist.fasta') else [],
 	params:
-		criteria=germlinefilter_criteria
+		criteria=germlinefilter_criteria,
+		db_length='--db-length database/V.csv' if os.path.exists('database/V.csv') else '',
+		db_fasta='--db-fasta database/V.fasta --db-fasta database/D.fasta --db-fasta database/J.fasta'
 	log:
 		'iteration-{nr}/new_V_{pre,(pre|)}germline.log'
 	shell:
 		"igdiscover germlinefilter {params.criteria}"
+		" {params.db_length} {params.db_fasta} "
 		" --fasta={output.fasta} {input.tab} "
 		" 2> >(tee {log} >&2) "
 		" > {output.tab}"

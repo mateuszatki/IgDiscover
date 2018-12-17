@@ -89,6 +89,10 @@ def add_arguments(parser):
 			'even if criteria for discarding them would apply (except cross-mapping artifact '
 			'removal, which is always performed).')
 	arg('--fasta', metavar='FILE', help='Write new database in FASTA format to FILE')
+	arg('--db-length', metavar='CSV',
+		help='CSV file with V genes or alleles with correct V length in second column.')
+	arg('--db-fasta', metavar='FASTA', default=[], action='append',
+		help='FASTA file with V genes from starting database.')
 	arg('-l', '--low-expressed', action='append',
                 help='List of low expressed genes')
 	arg('tables', metavar='CANDIDATES.TAB',
@@ -318,6 +322,16 @@ def main(args):
 		whitelist.add_fasta(path)
 	logger.info('%d unique sequences in whitelist', len(whitelist))
 
+	starting_db = Whitelist()
+	for path in args.db_fasta:
+		starting_db.add_fasta(path)
+	logger.info('%d unique sequences in startring database', len(starting_db))
+
+	len_database = None
+	if args.db_length:
+                len_database = dict(pd.read_csv(args.db_length).values)
+                logger.info('Loaded gene length file with {} entries'.format(len(len_database)))
+
 	# Is this pre-germline filter
 	pre = False
 	if args.fasta:
@@ -420,12 +434,26 @@ def main(args):
 	# if not args.allow_chimeras:
         #   overall_table = overall_table[~is_chimera(overall_table, whitelist)].copy()
 
+        # Add column 'consensus_short' which is correct V length minus 3 nucletotides
+        # This effectively chops down V alleles if they're too long
+	if len_database:
+                expected_length = []
+                #for ind, row in overall_table.iterrows():
+                #        if row['name'] in len_database:
+                #                expected_length.append(len_database[row['name']])
+                #        elif row['name'].split('*', 1)[0] in len_database:
+                #                expected_length.append(len_database[row['name']])
+                #        else:
+                #                expected_length.append(0)  # Negative for unknown
+                #overall_table['expected_length'] = expected_length
+
         # Update original database names for exact consensus matches
 	updated_table = []
 	for ind, row in overall_table.iterrows():
-                m = whitelist.exact_match(row['consensus'])
+                m = starting_db.exact_match(row['consensus'])
+                # Call _F if exact match found in starting database
                 if m:
-                        row['name'] = m
+                        row['name'] = row['name'].replace('_S', '_F')
                 updated_table.append(row)
 	overall_table = pd.DataFrame.from_records(updated_table)
 
