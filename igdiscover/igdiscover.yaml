@@ -3,7 +3,7 @@
 
 # Upstream module
 # upstream: true/false if to run upstream module
-upstream: false
+upstream: true
 
 # Haplotype module specific parameters
 # haplotype: true/false if to run haplotype module
@@ -12,10 +12,10 @@ upstream: false
 # plotallele: true/false if to run plotalleles module
 # plotallele_j_gene: which j_gene to use for haplotyping (default IGHJ6*02 and IGHJ6*03)
 
-haplotype: false
-haplotype_v_gene: ['IGHV3-48', 'IGHV3-49']
+haplotype: true
+haplotype_v_gene: ['']
 haplotype_j_gene: ['']
-plotallele: false
+plotallele: true
 plotallele_j_gene: ['IGHJ6*02', 'IGHJ6*03']
 
 # How many discovery iterations to run. If 0, no updated database is created,
