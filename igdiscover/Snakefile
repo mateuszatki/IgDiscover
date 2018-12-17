@@ -794,7 +794,7 @@ if config.upstream:
 		input:
 			filtered='final/filtered.tab.gz'
 		shell:
-			"igdiscover upstream {input.filtered} > {output.fasta} 2> "
+			"igdiscover upstream --max-V-errors=0 {input.filtered} > {output.fasta} 2> "
 			"{output.log}"
 
 if config.plotallele:
