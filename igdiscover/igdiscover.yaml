@@ -238,4 +238,4 @@ j_discovery:
 d_discovery:
   allele_ratio: 0.2         # Required minimum ratio between alleles of a single gene
   cross_mapping_ratio: 0.1  # Threshold for removal of cross-mapping artifacts.
-  propagate: true           # Use D genes discovered in iteration 1 in subsequent ones
+  propagate: false          # Use D genes discovered in iteration 1 in subsequent ones
