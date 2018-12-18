@@ -790,11 +790,12 @@ if config.upstream:
 		"""Run upstream module"""
 	     	output:
 			fasta='final/upstream.fasta',
+			tab='final/upstream.tab',
 			log='final/upstream.log'
 		input:
 			filtered='final/filtered.tab.gz'
 		shell:
-			"igdiscover upstream --max-V-errors=0 {input.filtered} > {output.fasta} 2> "
+			"igdiscover upstream --max-V-errors=0 --outtab {output.tab} {input.filtered} > {output.fasta} 2> "
 			"{output.log}"
 
 if config.plotallele:

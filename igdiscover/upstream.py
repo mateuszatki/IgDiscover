@@ -10,6 +10,7 @@ Output a FASTA file that contains one consensus sequence for each gene.
 import logging
 from collections import Counter
 import re
+import pandas as pd
 
 from .table import read_table
 from .utils import iterative_consensus
@@ -44,12 +45,13 @@ def add_arguments(parser):
 		help='Enable debugging output')
 	arg('--keep', default=True, action='store_true',
 		help='Whenever regex matches, keep sequence starting at ATG and in range of 53-63 residues from 3 prime end')
+	arg('--outtab', help='Table to store upstream summary')
 	arg('table', help='Table with parsed IgBLAST results (assigned.tab.gz or '
 		'filtered.tab.gz)')
 
 
 def main(args):
-	keep = re.compile('.*(ATG[ATGC]{53,63})$')
+	keep = re.compile('.*(ATG[ATGCN]{53,63})$')
 	if args.debug:
 		logging.getLogger().setLevel(logging.DEBUG)
 	table = read_table(args.table)
@@ -69,6 +71,8 @@ def main(args):
 
 	n_written = 0
 	n_consensus_with_n = 0
+
+	out_table = {}
 	for name, group in table.groupby('V_gene'):
 		assert len(group) != 0
 		if len(group) < args.min_consensus_size:
@@ -76,6 +80,7 @@ def main(args):
 			continue
 
 		counter = Counter(group['UTR_length'])
+		j_counter = Counter(group['J_gene'])
 		logger.debug('Sequence length/count table: %s',
 			', '.join('{}: {}'.format(l, c) for l, c in counter.most_common()))
 
@@ -111,9 +116,17 @@ def main(args):
 		m = keep.match(cons)
 		truncated = False
 		if m and args.keep:
-                    cons = m.group(1)
-                    truncated = True
+			cons = m.group(1)
+			truncated = True
 		print('>{} {}_consensus_{}\n{}'.format(name, args.part, 'cut' if truncated else 'full', cons))
 
+                # Add data to table
+		out_table.setdefault('name', []).append(name)
+		out_table.setdefault('N_count',[]).append(cons.count('N'))
+		for j in ['IGHJ6*02', 'IGHJ6*03']:
+                        out_table.setdefault(j, []).append(dict(j_counter).get(j, 0))
+		out_table.setdefault('consensus', []).append(cons)
+	if args.outtab:
+                pd.DataFrame.from_dict(out_table).to_csv(args.outtab, sep='\t')
 	in_or_ex = 'excluding' if args.no_ambiguous else 'including'
 	logger.info('Wrote a consensus for %s of %s genes (%s %s with ambiguous bases)', n_written, n_genes, in_or_ex, n_consensus_with_n)
