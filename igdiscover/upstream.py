@@ -49,7 +49,7 @@ def add_arguments(parser):
 
 
 def main(args):
-	keep = re.compile('.*(ATG[ATGC]{53-63})$')
+	keep = re.compile('.*(ATG[ATGC]{53,63})$')
 	if args.debug:
 		logging.getLogger().setLevel(logging.DEBUG)
 	table = read_table(args.table)
@@ -109,9 +109,11 @@ def main(args):
 		n_written += 1
                 # Remove the region before ATG
 		m = keep.match(cons)
+		truncated = False
 		if m and args.keep:
-                    cons = cons.group(1)
-		print('>{} {}_consensus\n{}'.format(name, args.part, cons))
+                    cons = m.group(1)
+                    truncated = True
+		print('>{} {}_consensus_{}\n{}'.format(name, args.part, 'cut' if truncated else 'full', cons))
 
 	in_or_ex = 'excluding' if args.no_ambiguous else 'including'
 	logger.info('Wrote a consensus for %s of %s genes (%s %s with ambiguous bases)', n_written, n_genes, in_or_ex, n_consensus_with_n)
