@@ -13,7 +13,7 @@ import re
 import pandas as pd
 
 from .table import read_table
-from .utils import iterative_consensus
+from .utils import iterative_consensus, Merger, merge_overlapping
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,23 @@ def add_arguments(parser):
 	arg('table', help='Table with parsed IgBLAST results (assigned.tab.gz or '
 		'filtered.tab.gz)')
 
+
+class OverlappingSequenceMerger(Merger):
+	"""
+	Merge sequences that overlap
+	"""
+	def merged(self, s, t):
+		"""
+		Merge two sequences if they overlap. If they should not be merged,
+		None is returned.
+		"""
+		m = merge_overlapping(s['consensus'], t['consensus'])
+		if m is not None:
+			for g in ['IGHJ6*02', 'IGHJ6*03']:
+                                s[g] += t[g]
+			s['consensus'] = m
+			return s
+		return None
 
 def main(args):
 	keep = re.compile('.*(ATG[ATGCN]{53,63})$')
@@ -114,11 +131,8 @@ def main(args):
 		n_written += 1
                 # Remove the region before ATG
 		m = keep.match(cons)
-		truncated = False
 		if m and args.keep:
 			cons = m.group(1)
-			truncated = True
-		print('>{} {}_consensus_{}\n{}'.format(name, args.part, 'cut' if truncated else 'full', cons))
 
                 # Add data to table
 		out_table.setdefault('name', []).append(name)
@@ -126,7 +140,18 @@ def main(args):
 		for j in ['IGHJ6*02', 'IGHJ6*03']:
                         out_table.setdefault(j, []).append(dict(j_counter).get(j, 0))
 		out_table.setdefault('consensus', []).append(cons)
+
+        # Merge overlapping sequences
+	merger = OverlappingSequenceMerger()
+	for i, row in pd.DataFrame.from_dict(out_table).iterrows():
+                    merger.add(row)
+	out_df = pd.DataFrame.from_records(list(merger))
+
+        # Print out to fasta
+	for i, row in out_df.iterrows():
+                print('>{} consensus_{}\n{}'.format(row['name'], args.part, row['consensus']))
+
 	if args.outtab:
-                pd.DataFrame.from_dict(out_table).to_csv(args.outtab, sep='\t')
+                out_df.to_csv(args.outtab, sep='\t')
 	in_or_ex = 'excluding' if args.no_ambiguous else 'including'
 	logger.info('Wrote a consensus for %s of %s genes (%s %s with ambiguous bases)', n_written, n_genes, in_or_ex, n_consensus_with_n)
