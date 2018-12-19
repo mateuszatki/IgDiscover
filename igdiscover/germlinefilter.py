@@ -434,19 +434,19 @@ def main(args):
 	# if not args.allow_chimeras:
         #   overall_table = overall_table[~is_chimera(overall_table, whitelist)].copy()
 
-        # Add column 'consensus_short' which is correct V length minus 3 nucletotides
         # This effectively chops down V alleles if they're too long
 	if len_database:
-                expected_length = []
-                #for ind, row in overall_table.iterrows():
-                #        if row['name'] in len_database:
-                #                expected_length.append(len_database[row['name']])
-                #        elif row['name'].split('*', 1)[0] in len_database:
-                #                expected_length.append(len_database[row['name']])
-                #        else:
-                #                expected_length.append(0)  # Negative for unknown
-                #overall_table['expected_length'] = expected_length
-
+            updated_table = []
+            for i, row in overall_table.iterrows():
+                    v_len = len(row['consensus'])
+                    gene = row['name'].split('*',1)[0]
+                    if row['name'] in len_database:
+                            v_len = len_database[row['name']]
+                    elif gene in len_database:
+                            v_len = len_database[gene]
+                    row['consensus_short'] = row['consensus'][0:v_len]
+                    updated_table.append(row)
+            overall_table = pd.DataFrame.from_records(updated_table)
         # Update original database names for exact consensus matches
 	updated_table = []
 	for ind, row in overall_table.iterrows():
@@ -463,5 +463,8 @@ def main(args):
 		with open(args.fasta, 'w') as f:
 			for _, row in overall_table.iterrows():
 				print('>{}\n{}'.format(row['name'], row['consensus']), file=f)
+	#with open('len_'+args.fasta, 'w') as f:
+	#		for _, row in overall_table.iterrows():
+	#			print('>{}\n{}'.format(row['name'], row['consensus']), file=f)
 
 	logger.info('%d sequences in new database', len(overall_table))
