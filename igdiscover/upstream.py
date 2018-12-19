@@ -124,19 +124,27 @@ def main(args):
 		logger.info('Gene %s has %s assignments, %s usable (%s unique sequences). '
 			'Consensus has %s N bases.', name, len(group), len(sequences),
 			len(set(sequences)), cons.count('N'))
-		if cons.count('N') > 0:
-			n_consensus_with_n += 1
-			if args.no_ambiguous:
-				continue
-		n_written += 1
+
                 # Remove the region before ATG
 		m = keep.match(cons)
 		if m and args.keep:
 			cons = m.group(1)
 
-                # Add data to table
+		ncount = cons.count('N')
+		if ncount > 0:
+			n_consensus_with_n += 1
+			if args.no_ambiguous:
+				continue
+		n_written += 1
+
+		# Get rows matching sequences from which consensus is build
+		subgroup = group['leader'].isin(sequences)
+                # Group it by Js
+		logger.info(len(subgroup))
+
+		# Add data to table
 		out_table.setdefault('name', []).append(name)
-		out_table.setdefault('N_count',[]).append(cons.count('N'))
+		out_table.setdefault('N_count',[]).append(ncount)
 		for j in ['IGHJ6*02', 'IGHJ6*03']:
                         out_table.setdefault(j, []).append(dict(j_counter).get(j, 0))
 		out_table.setdefault('consensus', []).append(cons)
