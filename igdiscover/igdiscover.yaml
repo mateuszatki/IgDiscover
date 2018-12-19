@@ -22,7 +22,7 @@ plotallele_j_gene: ['IGHJ6*02', 'IGHJ6*03']
 # but expression profiles are still computed. Unless working with a highly
 # incomplete starting database, a single iteration is usually sufficient.
 #
-iterations: 2
+iterations: 1
 
 
 # Type of sequences: Choose 'Ig' or 'TCR'.
