@@ -17,7 +17,7 @@ from sqt import FastaReader
 from sqt.align import edit_distance
 from .utils import Merger, merge_overlapping, unique_name, is_same_gene, slice_arg
 from .table import read_table, fix_columns
-
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +61,10 @@ def add_arguments(parser):
 
 class Candidate:
 	__slots__ = ('name', 'sequence', 'exact_occ', 'max_count', 'other_genes', 'db_name',
-		'db_distance', 'cdr3s', 'missing')
+		     'db_distance', 'cdr3s', 'missing', 'J6_2', 'J6_3')
 
 	def __init__(self, name, sequence, exact_occ=0, max_count=0, cdr3s=None, other_genes=None,
-			db_name=None, db_distance=None):
+			db_name=None, db_distance=None, J6_2=0, J6_3=0):
 		self.name = name
 		self.sequence = sequence
 		self.exact_occ = exact_occ
@@ -74,6 +74,8 @@ class Candidate:
 		self.db_name = db_name
 		self.db_distance = db_distance
 		self.missing = ''
+		self.J6_2 = J6_2
+		self.J6_3 = J6_3
 
 	@property
 	def unique_CDR3(self):
@@ -98,7 +100,9 @@ class OverlappingSequenceMerger(Merger):
 		"""
 		m = merge_overlapping(s.sequence, t.sequence)
 		if m is not None:
-			return Candidate(s.name, m, max_count=t.max_count + s.max_count)
+			return Candidate(s.name, m, max_count=t.max_count + s.max_count,
+                                         J6_2=t.J6_2+s.J6_2,
+                                         J6_3=t.J6_3+s.J6_3)
 
 		return None
 
@@ -169,6 +173,15 @@ def filter_by_allele_ratio(table, allele_ratio):
 		.set_index('gene')
 	return counts
 
+
+def count_js(candidates, table_path):
+        table = pd.read_csv(table_path, usecols=['J_gene', 'genomic_sequence'], sep='\t')
+        updated_candidates = []
+        for candidate in candidates:
+                candidate.J6_2 = sum(table[table.genomic_sequence.str.contains(candidate.sequence)].J_gene == 'IGHJ6*02')
+                candidate.J6_3 = sum(table[table.genomic_sequence.str.contains(candidate.sequence)].J_gene == 'IGHJ6*03')
+                updated_candidates.append(candidate)
+        return(updated_candidates)
 
 def count_occurrences(candidates, table_path, search_columns, other_gene, other_errors, merge,
 		perfect_matches):
@@ -256,7 +269,6 @@ def sequence_candidates(table, column, minimum_length, core=slice(None, None), m
 		if len(sequence) >= minimum_length and occ >= min_occ:
 			yield Candidate(None, sequence, max_count=occ)
 
-
 def count_unique_cdr3(table):
 	return len(set(s for s in table.CDR3_nt if s))
 
@@ -306,7 +318,7 @@ def make_whitelist(table, database, gene_type: str, allele_ratio=None) -> List[s
 
 
 def print_table(candidates, other_gene, missing):
-	columns = ['name', 'exact_occ', other_gene + 's', 'CDR3s', 'database', 'database_diff', 'sequence']
+	columns = ['name', 'exact_occ', other_gene + 's', 'CDR3s', 'database', 'database_diff', 'sequence', 'J6_2', 'J6_3']
 	if missing:
 		columns.append('missing')
 	print(*columns, sep='\t')
@@ -318,13 +330,14 @@ def print_table(candidates, other_gene, missing):
 			candidate.unique_CDR3,
 			candidate.db_name if candidate.db_name is not None else '',
 			candidate.db_distance if candidate.db_distance is not None else -1,
-			candidate.sequence
+			candidate.sequence,
+                        candidate.J6_2,
+                        candidate.J6_3
 		]
 		if missing:
 			columns.append(candidate.missing)
 		print(*columns, sep='\t')
-
-
+            
 def main(args):
 	if args.database:
 		with FastaReader(args.database) as fr:
@@ -438,6 +451,8 @@ def main(args):
 		search_columns = ['genomic_sequence']
 	candidates = count_occurrences(candidates, args.table, search_columns, other_gene, other_errors,
 		args.merge, args.perfect_matches)
+	if args.gene == 'D':
+            candidates = count_js(candidates, args.table)
 
 	# Filter by allele ratio
 	if args.allele_ratio or args.cross_mapping_ratio:
@@ -449,6 +464,7 @@ def main(args):
 
 	candidates = sorted(candidates, key=lambda c: c.name)
 	candidates = [c for c in candidates if c.exact_occ >= args.min_count or c.db_distance == 0]
+
 	print_table(candidates, other_gene, missing=args.gene == 'D')
 
 	if args.fasta:
