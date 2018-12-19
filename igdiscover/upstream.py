@@ -137,11 +137,6 @@ def main(args):
 				continue
 		n_written += 1
 
-		# Get rows matching sequences from which consensus is build
-		subgroup = group['leader'].isin(sequences)
-                # Group it by Js
-		logger.info(len(subgroup))
-
 		# Add data to table
 		out_table.setdefault('name', []).append(name)
 		out_table.setdefault('N_count',[]).append(ncount)
@@ -150,10 +145,11 @@ def main(args):
 		out_table.setdefault('consensus', []).append(cons)
 
         # Merge overlapping sequences
-	merger = OverlappingSequenceMerger()
-	for i, row in pd.DataFrame.from_dict(out_table).iterrows():
-                    merger.add(row)
-	out_df = pd.DataFrame.from_records(list(merger))
+	#merger = OverlappingSequenceMerger()
+	#for i, row in pd.DataFrame.from_dict(out_table).iterrows():
+        #            merger.add(row)
+	#out_df = pd.DataFrame.from_records(list(merger))
+	out_df = pd.DataFrame.from_dict(out_table)
 
         # Print out to fasta
 	for i, row in out_df.iterrows():
