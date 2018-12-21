@@ -13,10 +13,10 @@ upstream: true
 # plotallele_j_gene: which j_gene to use for haplotyping (default IGHJ6*02 and IGHJ6*03)
 
 haplotype: true
-haplotype_v_gene: ['IGHV3-48', 'IGHV3-49']
+haplotype_v_gene: ['IGHV3-48', 'IGHV3-49', 'IGHV3-53', 'IGHV4-39', 'IGHV3-11']
 haplotype_j_gene: ['']
 plotallele: true
-plotallele_j_gene: ['IGHJ6*02', 'IGHJ6*03']
+plotallele_j_gene:  ['IGHJ6*02', 'IGHJ6*03', 'IGHJ4*02', 'IGHJ4*02_S0362']
 
 # How many discovery iterations to run. If 0, no updated database is created,
 # but expression profiles are still computed. Unless working with a highly
