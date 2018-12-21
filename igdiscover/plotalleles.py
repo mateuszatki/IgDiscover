@@ -69,11 +69,19 @@ def main(args):
 		print(g, '{:8}'.format(count))
 
 	alleles = args.alleles.split(',')
-	for allele in alleles:
-		if allele not in matrix.columns:
-			logger.error('Allele %s not expressed in this dataset', allele)
-			sys.exit(1)
-
+	pairfound = False
+	for i in range(0, len(alleles), 2):
+		x, y = alleles[i:(i+2)]
+		if (x not in matrix.columns) or (y not in matrix.columns):
+			logger.info("Pair {} {} not expressed, skipping".format(x, y))
+			continue # Skip this pair
+		else:
+                        pairfound = True
+                        alleles = [x ,y]
+                        break    # Found so do not try other
+	if not pairfound:
+                logger.error('Allele %s not expressed in this dataset', args.alleles)
+                sys.exit(1)
 	matrix = matrix.loc[:, alleles]
 
 	if args.database:
