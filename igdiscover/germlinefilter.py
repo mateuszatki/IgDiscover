@@ -68,6 +68,8 @@ def add_arguments(parser):
 	arg('--unique-CDR3', '--CDR3s', type=int, metavar='N', default=1,
 		help='Sequences must have at least N unique CDR3s within exact sequence matches. '
 		'Default: %(default)s')
+	arg('--len-maxfreq-CDR3', type=float, metavar='R', default=1.0,
+		help='Sequences must have at most this many unique CDR3s with the same length. ')
 	# The default for unique-J is 0 because we might work on data without
 	# any assigned J genes.
 	arg('--unique-J', type=int, metavar='N', default=0,
@@ -369,6 +371,9 @@ def main(args):
 		if not args.allow_stop:
 			table = table[(table.has_stop == 0) | (table.whitelist_diff == 0)]
 		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0) | (select_low_expressed & (table.cluster_size >= config.pre_germline_filter['cluster_size']))]
+		# Filter with len-maxfreq-CDR3, except low expressed which tend to give high numbers for this criteria
+		table = table[(table.CDR3_len_maxfreq <= args.len_maxfreq_CDR3) | select_low_expressed]
+
 		table['database_changes'].fillna('', inplace=True)
 		table = table.dropna()
 		logger.info('Table read from %r contains %s candidate V gene sequences. '
@@ -391,6 +396,7 @@ def main(args):
 	def cluster_size_is_accurate(row):
 		return bool(set(row.cluster.split(';')) & {'all', 'db'})
 
+        # Here we use allele ratio types of filters
 	for _, row in overall_table.iterrows():
 		merger.add(SequenceInfo(
 			sequence=row['consensus'],

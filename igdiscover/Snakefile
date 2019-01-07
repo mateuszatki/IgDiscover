@@ -670,6 +670,7 @@ def germlinefilter_criteria(wildcards, input):
 	criteria += ['--clonotype-ratio={}'.format(conf['clonotype_ratio'])]
 	criteria += ['--exact-ratio={}'.format(conf['exact_ratio'])]
 	criteria += ['--cdr3-shared-ratio={}'.format(conf['cdr3_shared_ratio'])]
+	criteria += ['--len-maxfreq-CDR3={}'.format(conf['len_maxfreq_CDR3'])]
 	criteria += ['--unique-D-ratio={}'.format(conf['unique_d_ratio'])]
 	criteria += ['--unique-D-threshold={}'.format(conf['unique_d_threshold'])]
 	if 'low_expressed' in conf:
