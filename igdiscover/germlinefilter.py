@@ -456,11 +456,12 @@ def main(args):
         # Update original database names for exact consensus matches
 	updated_table = []
 	for ind, row in overall_table.iterrows():
-                m = starting_db.exact_match(row['consensus'])
-                # Call _F if exact match found in starting database
-                if m:
+		m = starting_db.exact_match(row['consensus'])
+		# Call _F if exact match found in starting database
+                # If sequence exists in database, but is not denoted as novel
+		if m and ('_' not in m):
                         row['name'] = row['name'].replace('_S', '_F')
-                updated_table.append(row)
+		updated_table.append(row)
 	overall_table = pd.DataFrame.from_records(updated_table)
 
 	print(overall_table.to_csv(sep='\t', index=False, float_format='%.2f'), end='')
