@@ -55,7 +55,7 @@ def expression_counts(table: pd.DataFrame, gene_type: str) -> Iterator[pd.DataFr
 	'count'. For example, when 'name' is VH1-1*01, gene would be 'VH1-1' and allele
 	would be '01'.
 	"""
-	counts = table.groupby(gene_type + '_gene').size()
+	counts = table.dropna().groupby(gene_type + '_gene').size()
 	names, _, alleles = zip(*[s.partition('*') for s in counts.index])
 	expressions = pd.DataFrame(
 		{'gene': names, 'allele': alleles, 'count': counts, 'name': counts.index},
