@@ -24,6 +24,7 @@ from .table import read_table
 from .cluster import cluster_sequences, single_linkage
 from .utils import (iterative_consensus, unique_name, downsampled, SerialPool, Merger, has_stop,
 	describe_nt_change)
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -369,15 +370,22 @@ class Discoverer:
                                         CDR3_len_maxfreq=cdr3_most_common_length_frequency,
 					clonotypes=clonotypes, read_names=read_names,
 					unique_barcodes=unique_barcodes)
+			flag_end_changes = None
 			if gene in self.database:
 				database_diff = edit_distance(sibling, self.database[gene])
 				database_changes = describe_nt_change(self.database[gene], sibling)
+				for position in re.findall('\d+', database_changes):
+					logger.info("Position:{}".format(position))
+					if int(position) >= (len(sibling) - 4):
+                                                flag_end_changes = True
 			else:
 				database_diff = None
 				database_changes = None
 
 			# Build the Candidate
 			sequence_id = gene if database_diff == 0 else unique_name(gene, sibling)
+			if flag_end_changes:
+				sequence_id = sequence_id.replace('S','E').replace('F','E')
 			chain = self._guess_chain(sibling_info.group)
 			cdr3_start = self._guess_cdr3_start(sibling_info.group)
 			try:
