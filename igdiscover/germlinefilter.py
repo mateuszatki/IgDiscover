@@ -460,10 +460,13 @@ def main(args):
 		# Call _F if exact match found in starting database
                 # If sequence exists in database, but is not denoted as novel
 		if m and ('_' not in m):
-                        row['name'] = row['name'].replace('_S', '_F')
+                        row['name'] = row['name'].replace('S', 'F').replace('E', 'F')
 		updated_table.append(row)
 	overall_table = pd.DataFrame.from_records(updated_table)
 
+	# Add columns with frequencies
+	overall_table = overall_table.assign(barcodes_exact_freq=overall_table.barcodes_exact.apply(lambda x: round(x/sum(overall_table.barcodes_exact),6)))
+	overall_table.barcodes_exact_freq = overall_table.barcodes_exact_freq.astype(str)
 	print(overall_table.to_csv(sep='\t', index=False, float_format='%.2f'), end='')
 
 	if args.fasta:
