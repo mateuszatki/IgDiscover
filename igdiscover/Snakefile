@@ -827,9 +827,10 @@ if config.haplotype:
 		params:
 			vg_arg=['--v-gene {} '.format(vg) for vg in config.haplotype_v_gene if vg],
 			jg_arg=['--j-gene {} '.format(jg) for jg in config.haplotype_j_gene if jg],
+			vj_errors=config.haplotype_vj_errors,
 			gene_order = 'database/order.fasta'
 		shell:
-			"igdiscover haplotype --order {params.gene_order} --plot={output.haploplot} --structure-plot {output.haploplot_struct} "
+			"igdiscover haplotype --order {params.gene_order} --vj-errors {params.vj_errors} --plot={output.haploplot} --structure-plot {output.haploplot_struct} "
 			" {params.vg_arg} {params.jg_arg} {input.filtered} 2> "
 			">(tee {output.log} >&2) > {output.haplotable}"
 

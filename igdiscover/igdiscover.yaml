@@ -9,12 +9,14 @@ upstream: true
 # haplotype: true/false if to run haplotype module
 # haplotype_v_gene: which v_gene to use for haplotyping (empty automatic)
 # haplotype_j_gene: which j_gene to ue for haplotyping (empty automatic)
+# haplotype_vj_errors: maximum errors allowed in Vs and Js
 # plotallele: true/false if to run plotalleles module
 # plotallele_j_gene: which j_gene to use for haplotyping (default IGHJ6*02 and IGHJ6*03)
 
 haplotype: true
 haplotype_v_gene: ['IGHV3-48', 'IGHV3-49', 'IGHV3-53', 'IGHV4-39', 'IGHV3-11']
 haplotype_j_gene: ['']
+haplotype_vj_errors: 1
 plotallele: true
 plotallele_j_gene:  ['IGHJ6*02', 'IGHJ6*03', 'IGHJ4*02', 'IGHJ4*02_S0362']
 

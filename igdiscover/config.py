@@ -36,6 +36,7 @@ class Config:
 		self.haplotype = False
 		self.haplotype_v_gene = ['']
 		self.haplotype_j_gene = ['']
+		self.haplotype_vj_errors = 1
 		self.plotallele = False
 		self.plotallele_j_gene = ['IGHJ6*03', 'IGHJ6*02']
 		self.upstream = False
