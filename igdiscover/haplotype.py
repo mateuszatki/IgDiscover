@@ -28,6 +28,8 @@ def add_arguments(parser: ArgumentParser):
             help='V gene to use for haplotyping J. Default: Auto-detected')
 	arg('--j-gene', action='append',
             help='J gene to use for haplotyping V. Default: Auto-detected')
+	arg('--vj-errors', type=int, default=1,
+            help='Maximum allowed number of errors in Vs and Js')
 	arg('--d-evalue', type=float, default=1E-4,
 		help='Maximal allowed E-value for D gene match. Default: %(default)s')
 	arg('--d-coverage', '--D-coverage', type=float, default=65,
@@ -299,7 +301,7 @@ def plot_haplotypes(blocks: List[HaplotypePair], show_unknown: bool=False, binar
 	return fig
 
 
-def read_and_filter(path: str, d_evalue: float, d_coverage: float):
+def read_and_filter(path: str, d_evalue: float, d_coverage: float, vjerrors: int):
 	usecols = ['V_gene', 'D_gene', 'J_gene', 'V_errors', 'D_errors', 'J_errors', 'D_covered',
 		'D_evalue']
 	# Support reading a table without D_errors
@@ -310,10 +312,10 @@ def read_and_filter(path: str, d_evalue: float, d_coverage: float):
 		table = read_table(path, usecols=usecols)
 	logger.info('Table with %s rows read', len(table))
 
-	table = table[table.V_errors == 0]
-	logger.info('%s rows remain after requiring V errors = 0', len(table))
-	table = table[table.J_errors == 0]
-	logger.info('%s rows remain after requiring J errors = 0', len(table))
+	table = table[table.V_errors <= vjerrors]
+	logger.info('%s rows remain after requiring V errors <= %d', len(table),vjerrors)
+	table = table[table.J_errors <= vjerrors]
+	logger.info('%s rows remain after requiring J errors <= %d', len(table),vjerrors)
 # Disable D filtering to match plotallele module with counts
 #	table = table[table.D_evalue <= d_evalue]
 #	logger.info('%s rows remain after requiring D E-value <= %s', len(table), d_evalue)
@@ -332,7 +334,7 @@ def main(args):
 	else:
 		gene_order = None
 
-	table = read_and_filter(args.table, args.d_evalue, args.d_coverage)
+	table = read_and_filter(args.table, args.d_evalue, args.d_coverage, args.vj_errors)
 
 	if args.restrict is not None:
 		with SequenceReader(args.restrict) as sr:
