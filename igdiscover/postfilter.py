@@ -19,12 +19,13 @@ def main(args):
     germline = pd.read_table(args.germline)
 
     # Extract gene and allele names
-    germline = pd.concat([germline,germline.name.str.partition('*').drop(1,axis=1).rename({0:'gene',2:'allele'},axis=1)],axis=1)
+    germline = pd.concat([germline, germline.name.str.partition('*').drop(1,axis=1).rename({0:'gene',2:'allele'},axis=1)],axis=1)
     germline['keep'] = True
 
     # Calculate ratio with median
+    germline['barcodes_exact_freq'] = germline.barcodes_exact / np.sum(germline.barcodes_exact)
     germline['barcodes_exact_mednorm'] = germline.barcodes_exact / np.median(germline.barcodes_exact)
-    
+
     if os.path.isfile(args.expected):
         # Load expected frequencies
         table = pd.read_table(args.expected, dtype=str)
@@ -35,12 +36,12 @@ def main(args):
         
         isnull = ftable.allele_x.isnull() | ftable.allele_y.isnull()
         # Check lower bound first for allele then for gene
-        ftable.loc[~isnull & ~ftable.lower.isnull(),'keep'] = ftable.barcodes_exact_mednorm[~isnull] > ftable.lower[~isnull]
-        ftable.loc[isnull & ~ftable.lower.isnull(),'keep'] = ftable.barcodes_exact_mednorm[isnull] > ftable.lower[isnull]
+        ftable.loc[~isnull & ~ftable.lower.isnull(),'keep'] = ftable.barcodes_exact_freq[~isnull] > ftable.lower[~isnull]
+        ftable.loc[isnull & ~ftable.lower.isnull(),'keep'] = ftable.barcodes_exact_freq[isnull] > ftable.lower[isnull]
         # Check also upper bound
-        ftable.loc[~isnull & ~ftable.upper.isnull(),'keep'] = (ftable.barcodes_exact_mednorm[~isnull] < ftable.upper[~isnull]) & ftable.keep
-        ftable.loc[isnull & ~ftable.upper.isnull(),'keep'] = (ftable.barcodes_exact_mednorm[isnull] < ftable.upper[isnull]) & ftable.keep
-        
+        ftable.loc[~isnull & ~ftable.upper.isnull(),'keep'] = (ftable.barcodes_exact_freq[~isnull] < ftable.upper[~isnull]) & ftable.keep
+        ftable.loc[isnull & ~ftable.upper.isnull(),'keep'] = (ftable.barcodes_exact_freq[isnull] < ftable.upper[isnull]) & ftable.keep
+
         # Drop alleles which are already taken care off with allele specific entries
         germline = ftable[~(ftable.name.isin(ftable[~isnull].name) & isnull)]
 
