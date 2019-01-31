@@ -1,5 +1,10 @@
 ## IgDiscover configuration
 
+#
+# Expected barcodes_frequency filter
+# If table is provided use ranges for computed frequencies to filter out
+# obvious false positives (i.e usually highly expressed genes)
+expected_filter: false
 
 # Upstream module
 # upstream: true/false if to run upstream module

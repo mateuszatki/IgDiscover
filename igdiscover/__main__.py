@@ -51,6 +51,7 @@ COMMANDS = [
 	'clonoquery',
 	'plotalleles',
 	'haplotype',
+        'postfilter'
 ]
 
 logger = logging.getLogger(__name__)

@@ -35,6 +35,7 @@ import pandas as pd
 from sqt import FastaReader
 from sqt.align import edit_distance
 import re
+import numpy as np
 
 from .utils import UniqueNamer, Merger, is_same_gene, ChimeraFinder
 from .config import Config
@@ -464,9 +465,6 @@ def main(args):
 		updated_table.append(row)
 	overall_table = pd.DataFrame.from_records(updated_table)
 
-	# Add columns with frequencies
-	overall_table = overall_table.assign(barcodes_exact_freq=overall_table.barcodes_exact.apply(lambda x: round(x/sum(overall_table.barcodes_exact),6)))
-	overall_table.barcodes_exact_freq = overall_table.barcodes_exact_freq.astype(str)
 	print(overall_table.to_csv(sep='\t', index=False, float_format='%.2f'), end='')
 
 	if args.fasta:
