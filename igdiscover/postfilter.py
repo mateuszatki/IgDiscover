@@ -44,6 +44,9 @@ def main(args):
 
         # Drop alleles which are already taken care off with allele specific entries
         germline = ftable[~(ftable.name.isin(ftable[~isnull].name) & isnull)]
+        # Drop columns which would turn into numbers but are alleles and not informative anyway
+        germline = germline.drop('allele_x',axis=1)
+        germline = germline.drop('allele_y',axis=1)
 
     # Apply filter
     if args.apply:
