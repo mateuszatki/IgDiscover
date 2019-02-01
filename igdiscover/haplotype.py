@@ -25,11 +25,15 @@ EXPRESSED_RATIO = 0.1
 def add_arguments(parser: ArgumentParser):
 	arg = parser.add_argument
 	arg('--v-gene', action='append',
-            help='V gene to use for haplotyping J. Default: Auto-detected')
+		help='V gene to use for haplotyping J. Default: Auto-detected')
 	arg('--j-gene', action='append',
-            help='J gene to use for haplotyping V. Default: Auto-detected')
+		help='J gene to use for haplotyping V. Default: Auto-detected')
+	arg('--v-with', default='J', choices=('J', 'D'),
+                help='Gene used for haplotyping Vs. Default: %(default)s')
+	arg('--d-with', default='J', choices=('J', 'V'),
+                help='Gene used for haplotyping Ds. Default: %(default)s')
 	arg('--vj-errors', type=int, default=1,
-            help='Maximum allowed number of errors in Vs and Js')
+		help='Maximum allowed number of errors in Vs and Js')
 	arg('--d-evalue', type=float, default=1E-4,
 		help='Maximal allowed E-value for D gene match. Default: %(default)s')
 	arg('--d-coverage', '--D-coverage', type=float, default=65,
@@ -415,8 +419,8 @@ def main(args):
 
 		for target_gene_type, het_gene in (
 			('J', 'V'),
-			('D', 'J'),
-			('V', 'J'),
+			('D', args.d_with),
+			('V', args.v_with),
 		):
 			het_alleles = best_het_genes[het_gene]
 			if het_alleles is None:
@@ -469,8 +473,8 @@ def main(args):
 		assert j_hap.gene_type == 'J'
 		assert d_hap.gene_type == 'D'
 		assert v_hap.gene_type == 'V'
-		assert d_hap.het1 == v_hap.het1
-		assert d_hap.het2 == v_hap.het2
+#		assert d_hap.het1 == v_hap.het1
+#		assert d_hap.het2 == v_hap.het2
 		for name1, name2, _, _ in j_hap.haplotype:
 			if (name1, name2) == (v_hap.het2, v_hap.het1):
 				j_hap.switch()
