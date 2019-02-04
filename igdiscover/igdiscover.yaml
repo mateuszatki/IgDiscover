@@ -19,7 +19,7 @@ upstream: true
 # plotallele_j_gene: which j_gene to use for haplotyping (default IGHJ6*02 and IGHJ6*03)
 
 haplotype: true
-haplotype_v_gene: ['IGHV3-48', 'IGHV3-49', 'IGHV3-53', 'IGHV4-39', 'IGHV3-11']
+haplotype_v_gene: ['']
 haplotype_j_gene: ['']
 haplotype_vj_errors: 1
 plotallele: true
