@@ -16,10 +16,11 @@ logger = logging.getLogger(__name__)
 # The second-most expressed allele of a gene must be expressed at at least this
 # fraction of the highest-expressed allele in order for the gene to be considered
 # heterozygous.
-HETEROZYGOUS_THRESHOLD = 0.1
+
+HETEROZYGOUS_THRESHOLD = {'V': 0.1, 'D': 0.2, 'J':0.1}
 
 #
-EXPRESSED_RATIO = 0.1
+EXPRESSED_RATIO = 0.05
 
 
 def add_arguments(parser: ArgumentParser):
@@ -34,6 +35,10 @@ def add_arguments(parser: ArgumentParser):
                 help='Gene used for haplotyping Ds. Default: %(default)s')
 	arg('--vj-errors', type=int, default=1,
 		help='Maximum allowed number of errors in Vs and Js')
+	arg('--heterozygous-threshold', type=float, default=0.1,
+		help='Heterozygous if second highest expressed allele is at least this fraction of first')
+	arg('--expressed-threshold', type=float, default=0.1,
+		help='Deletion if ')        
 	arg('--d-evalue', type=float, default=1E-4,
 		help='Maximal allowed E-value for D gene match. Default: %(default)s')
 	arg('--d-coverage', '--D-coverage', type=float, default=65,
@@ -82,7 +87,7 @@ def expression_counts(table: pd.DataFrame, gene_type: str) -> Iterator[pd.DataFr
 	for _, alleles in expressions.groupby(level='gene'):
 		# Remove alleles that have too low expression relative to the highest-expressed allele
 		max_expression = alleles['count'].max()
-		alleles = alleles[alleles['count'] >= HETEROZYGOUS_THRESHOLD * max_expression]
+		alleles = alleles[alleles['count'] >= HETEROZYGOUS_THRESHOLD[gene_type] * max_expression]
 		if len(alleles) >= 2:
 			logger.info('%s with alleles %s -- Counts: %s',
 				alleles.index[0][0],
@@ -158,6 +163,10 @@ def cooccurrences(coexpressions, het_alleles: Tuple[str, str], target_groups):
 			n_true = sum(x.count(True) for x in is_expressed_list)
 			if ([True, False] in is_expressed_list or [False, True] in is_expressed_list) and n_true > 2:
 				type_ = 'duplication'
+			# Additional rule, if more than on allele expressed on target chromosome, call it duplication
+			unique_alleles = len(set(target_alleles))
+			if ([True, True] in is_expressed_list) and (unique_alleles > 1):
+                                type_ = 'duplication'
 			for is_expressed, name, count in zip(is_expressed_list, names, counts):
 				haplotype.append((
 					name if is_expressed[0] else '',
