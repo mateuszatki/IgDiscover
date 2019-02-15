@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 HETEROZYGOUS_THRESHOLD = {'V': 0.1, 'D': 0.2, 'J':0.1}
 
 #
-EXPRESSED_RATIO = 0.05
+EXPRESSED_RATIO = {'V': 0.05, 'D': 0.05, 'J': 0.001}
 
 
 def add_arguments(parser: ArgumentParser):
@@ -38,10 +38,10 @@ def add_arguments(parser: ArgumentParser):
 	arg('--heterozygous-threshold', type=float, default=0.1,
 		help='Heterozygous if second highest expressed allele is at least this fraction of first')
 	arg('--expressed-threshold', type=float, default=0.1,
-		help='Deletion if ')        
+		help='Deletion if expressed below this ratio')        
 	arg('--d-evalue', type=float, default=1E-4,
 		help='Maximal allowed E-value for D gene match. Default: %(default)s')
-	arg('--d-coverage', '--D-coverage', type=float, default=65,
+	arg('--d-coverage', '--D-coverage', type=float, default=90,
 		help='Minimum D coverage (in percent). Default: %(default)s%%)')
 	arg('--restrict', metavar='FASTA',
 		help='Restrict analysis to the genes named in the FASTA file. '
@@ -110,12 +110,12 @@ class HeterozygousGene:
 def compute_coexpressions(table: pd.DataFrame, gene_type1: str, gene_type2: str):
 	assert gene_type1 != gene_type2
 	coexpressions = table.groupby(
-		(gene_type1 + '_gene', gene_type2 + '_gene')).size().to_frame()
+		[gene_type1 + '_gene', gene_type2 + '_gene']).size().to_frame()
 	coexpressions.columns = ['count']
 	return coexpressions
 
 
-def cooccurrences(coexpressions, het_alleles: Tuple[str, str], target_groups):
+def cooccurrences(coexpressions, het_alleles: Tuple[str, str], target_groups, gene_type):
 	"""
 	het_alleles -- a pair of alleles of a heterozygous gene,
 	such as ('IGHJ6*02', 'IGHJ6*03').
@@ -137,7 +137,7 @@ def cooccurrences(coexpressions, het_alleles: Tuple[str, str], target_groups):
 				ex.append(e)
 			ex_total = sum(ex) + 1  # +1 avoids division by zero
 			ratios = [x / ex_total for x in ex]
-			is_expressed = [ratio >= EXPRESSED_RATIO for ratio in ratios]
+			is_expressed = [ratio >= EXPRESSED_RATIO[gene_type] for ratio in ratios]
 			if is_expressed != [False, False]:
 				is_expressed_list.append(is_expressed)
 				names.append(target_allele)
@@ -329,14 +329,14 @@ def read_and_filter(path: str, d_evalue: float, d_coverage: float, vjerrors: int
 	logger.info('%s rows remain after requiring V errors <= %d', len(table),vjerrors)
 	table = table[table.J_errors <= vjerrors]
 	logger.info('%s rows remain after requiring J errors <= %d', len(table),vjerrors)
-# Disable D filtering to match plotallele module with counts
-#	table = table[table.D_evalue <= d_evalue]
-#	logger.info('%s rows remain after requiring D E-value <= %s', len(table), d_evalue)
-#	table = table[table.D_covered >= d_coverage]
-#	logger.info('%s rows remain after requiring D coverage >= %s', len(table), d_coverage)
-#	if 'D_errors' in table.columns:
-#		table = table[table.D_errors == 0]
-#		logger.info('%s rows remain after requiring D errors = 0', len(table))
+	# Disable D filtering to match plotallele module with counts
+	table = table[table.D_evalue <= d_evalue]
+	logger.info('%s rows remain after requiring D E-value <= %s', len(table), d_evalue)
+	table = table[table.D_covered >= d_coverage]
+	logger.info('%s rows remain after requiring D coverage >= %s', len(table), d_coverage)
+	if 'D_errors' in table.columns:
+		table = table[table.D_errors == 0]
+		logger.info('%s rows remain after requiring D errors = 0', len(table))
 	return table
 
 
@@ -367,7 +367,7 @@ def main(args):
 		het_ex = [e for e in ex if len(e) == 2]
 		if het_ex:
 			# Pick most highly expressed
-			het_expressions[gene_type] = sorted(het_ex, key=lambda e: e['count'].sum(), reverse=True)[:5]
+			het_expressions[gene_type] = sorted(het_ex, key=lambda e: e['count'].sum(), reverse=True)[:10]
 		else:
 			# Force at least something to be plotted
 			het_expressions[gene_type] = [None]
@@ -435,16 +435,23 @@ def main(args):
 			if het_alleles is None:
 				continue
 			coexpressions = compute_coexpressions(table, het_gene, target_gene_type)
+
 			target_groups = expressions[target_gene_type]
 			het1, het2 = het_alleles['name']
-			haplotype = cooccurrences(coexpressions, (het1, het2), target_groups)
+			if '3-30' in het1:
+				logger.info(het_alleles)
+                                # Skip 3-30 which is often duplicated gene
+				continue
+			haplotype = cooccurrences(coexpressions, (het1, het2), target_groups, target_gene_type)
 			block = HaplotypePair(haplotype, target_gene_type, het1, het2)
 			if gene_order:
 				block.sort(gene_order)
 			blocks.append(block)
 
-		if het_j is None or het_v is None:
-			break
+		#if het_j is None or het_v is None:
+		#	break
+		if het_v is None:
+                        break
 		het_used = set(sum([list(h['name']) for h in best_het_genes.values() if h is not None], []))
 		het_is_duplicate = False
 		for block in blocks:
