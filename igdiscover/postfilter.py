@@ -11,8 +11,11 @@ def add_arguments(parser):
             help='TSV germline tab')
 	arg('expected', type=str,
             help='TSV file with expected Vs frequencies')
+	arg('--fasta', type=str,
+            help='File to save sequences')
 	arg('--apply', default=False, action='store_true',
             help='Apply filtering to germline')
+        
 
 def main(args):
     # Load germline
@@ -52,3 +55,7 @@ def main(args):
     if args.apply:
         germline = germline[germline.keep]
     print(germline.to_csv(sep='\t', index=False))
+    if args.fasta:
+        with open(args.fasta, 'w') as f:
+                for _, row in germline[germline.keep].iterrows():
+                        print('>{}\n{}'.format(row['name'], row['consensus']), file=f)

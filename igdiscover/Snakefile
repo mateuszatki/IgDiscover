@@ -710,7 +710,7 @@ rule igdiscover_postfilter:
 	params:
 		apply='--apply' if config.expected_filter else ''
 	shell:
-		"igdiscover postfilter {params.apply} {input.tab} database/expected.tsv > {output.tab}"
+		"igdiscover postfilter {params.apply} {input.tab} database/expected.tsv --fasta {output.tab}.fasta > {output.tab}"
 
 rule igdiscover_discover_j:
 	"""Discover potential new J gene sequences"""
