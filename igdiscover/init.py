@@ -329,7 +329,7 @@ def main(args):
 				print('>{}\n{}'.format(record.name, record.sequence), file=db_file)
 
   # Copy order.fasta and V.csv files
-	aux_files = ['order.fasta', 'V.csv']
+	aux_files = ['order.fasta', 'V.csv', 'expected.tsv']
 	for f in aux_files:
 		path = os.path.join(dbpath, f)
 		if not os.path.exists(path):
