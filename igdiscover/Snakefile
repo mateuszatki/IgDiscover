@@ -35,7 +35,7 @@ DISCOVERY_TARGETS = [
 	'candidates.tab',
 	'new_V_germline.fasta',
 	'new_V_pregermline.fasta',
-	'new_V_germline.tab.post'
+	'new_V_germline.tab.post.fasta'
 ]
 TARGETS = expand('iteration-{nr:02d}/{path}', nr=range(1, config.iterations+1), path=ITERATION_TARGETS + DISCOVERY_TARGETS)
 TARGETS += [
@@ -706,11 +706,13 @@ rule igdiscover_postfilter:
 	input:
 		tab='iteration-{nr}/new_V_{pre,(pre|)}germline.tab'
 	output:
-		tab='iteration-{nr}/new_V_{pre,(pre|)}germline.tab.post'
+		tab='iteration-{nr}/new_V_{pre,(pre|)}germline.tab.post',
+		fasta='iteration-{nr}/new_V_{pre,(pre|)}germline.tab.post.fasta'
 	params:
-		apply='--apply' if config.expected_filter else ''
+		apply='--apply' if config.expected_filter else '',
+		filters='--len-maxfreq-CDR3={}'.format(config.germline_filter['len_maxfreq_CDR3'])
 	shell:
-		"igdiscover postfilter {params.apply} {input.tab} database/expected.tsv --fasta {output.tab}.fasta > {output.tab}"
+		"igdiscover postfilter {params.apply} {input.tab} {params.filters} database/expected.tsv --fasta {output.tab}.fasta > {output.tab}"
 
 rule igdiscover_discover_j:
 	"""Discover potential new J gene sequences"""
@@ -834,14 +836,15 @@ if config.haplotype:
 			haplotable='final/haplotable.tsv',
 			log='final/haplotype.log'
 		input:
-			filtered='final/filtered.tab.gz'
+			filtered='final/filtered.tab.gz',
+			postfasta='iteration-01/new_V_germline.tab.post.fasta'
 		params:
 			vg_arg=['--v-gene {} '.format(vg) for vg in config.haplotype_v_gene if vg],
 			jg_arg=['--j-gene {} '.format(jg) for jg in config.haplotype_j_gene if jg],
 			vj_errors=config.haplotype_vj_errors,
 			gene_order = 'database/order.fasta'
 		shell:
-			"igdiscover haplotype --order {params.gene_order} --vj-errors {params.vj_errors} --plot={output.haploplot} --structure-plot {output.haploplot_struct} "
+			"igdiscover haplotype --order {params.gene_order} --restrict {input.postfasta} --vj-errors {params.vj_errors} --plot={output.haploplot} --structure-plot {output.haploplot_struct} "
 			" {params.vg_arg} {params.jg_arg} {input.filtered} 2> "
 			">(tee {output.log} >&2) > {output.haplotable}"
 

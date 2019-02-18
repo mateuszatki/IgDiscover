@@ -15,11 +15,15 @@ def add_arguments(parser):
             help='File to save sequences')
 	arg('--apply', default=False, action='store_true',
             help='Apply filtering to germline')
-        
+	arg('--len-maxfreq-CDR3', default=0.9, type=float,
+            help='Length max frequency CDR3 filter')
 
 def main(args):
     # Load germline
     germline = pd.read_table(args.germline)
+
+    # Trigger filter
+    germline = germline[germline.CDR3_len_maxfreq <= args.len_maxfreq_CDR3]
 
     # Extract gene and allele names
     germline = pd.concat([germline, germline.name.str.partition('*').drop(1,axis=1).rename({0:'gene',2:'allele'},axis=1)],axis=1)
