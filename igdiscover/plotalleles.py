@@ -19,6 +19,8 @@ def add_arguments(parser):
 	arg('--database', metavar='FASTA',
 		help='Restrict plotting to the sequences named in the FASTA file. '
 		     'Only the sequence names are used!')
+	arg('--multiple-x', action='store_true', default=False,
+		help='Allow multiple alleles on horizontal axes.'),
 	arg('--order', metavar='FASTA',
 		help='Sort genes according to the order of the records in the FASTA file.')
 	arg('--x', choices=('V', 'D', 'J'), default='V',
@@ -82,6 +84,8 @@ def main(args):
 	if not pairfound:
                 logger.error('Allele %s not expressed in this dataset', args.alleles)
                 sys.exit(1)
+	if args.multiple_x:
+                alleles = args.alleles.split(',')
 	matrix = matrix.loc[:, alleles]
 
 	if args.database:
