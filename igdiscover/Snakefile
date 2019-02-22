@@ -710,9 +710,8 @@ rule igdiscover_postfilter:
 		fasta='iteration-{nr}/new_V_{pre,(pre|)}germline.tab.post.fasta'
 	params:
 		apply='--apply' if config.expected_filter else '',
-		filters='--len-maxfreq-CDR3={}'.format(config.germline_filter['len_maxfreq_CDR3'])
 	shell:
-		"igdiscover postfilter {params.apply} {input.tab} {params.filters} database/expected.tsv --fasta {output.tab}.fasta > {output.tab}"
+		"igdiscover postfilter {params.apply} {input.tab} database/expected.tsv --fasta {output.tab}.fasta > {output.tab}"
 
 rule igdiscover_discover_j:
 	"""Discover potential new J gene sequences"""

@@ -15,7 +15,7 @@ def add_arguments(parser):
             help='File to save sequences')
 	arg('--apply', default=False, action='store_true',
             help='Apply filtering to germline')
-	arg('--len-maxfreq-CDR3', default=0.9, type=float,
+	arg('--len-maxfreq-CDR3', default=1.0, type=float,
             help='Length max frequency CDR3 filter')
 
 def main(args):
