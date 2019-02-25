@@ -31,8 +31,8 @@ def add_arguments(parser):
 		help='Plot expressions to FILE (PDF or PNG)')
 
 	group = parser.add_argument_group('Input table filtering')
-	group.add_argument('--d-evalue', type=float, default=None,
-		help='Maximal allowed E-value for D gene match. Default: 1E-4 '
+	group.add_argument('--d-evalue', type=float, default=0.1,
+		help='Maximal allowed E-value for D gene match. Default: 0.1 '
 		'if --gene=D, no restriction otherwise.')
 	group.add_argument('--d-coverage', '--D-coverage', type=float, default=None,
 		help='Minimum D coverage (in percent). Default: 70 '
