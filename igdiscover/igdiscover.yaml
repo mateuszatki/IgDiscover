@@ -209,7 +209,7 @@ pre_germline_filter:
   clonotype_ratio: 0.12      # Required minimum ratio of clonotype counts between alleles of the same gene
   exact_ratio: 0.12          # Required minimum ratio of "exact" counts between alleles of the same gene
   cdr3_shared_ratio: 1.0     # Maximum allowed CDR3_shared_ratio
-  len_maxfreq_CDR3: 1.0      # Maximum allowed unique CDR3s with most common length
+  len_maxfreq_CDR3: 0.9      # Maximum allowed unique CDR3s with most common length
   unique_d_ratio: 0.3        # Minimum Ds_exact ratio between alleles
   unique_d_threshold: 10     # Check Ds_exact ratio only if highest-expressed allele has at least this Ds_exact count
 
@@ -227,10 +227,10 @@ germline_filter:
   clonotype_ratio: 0.12      # Required minimum ratio of clonotype counts between alleles of the same gene
   exact_ratio: 0.12          # Required minimum ratio of "exact" counts between alleles of the same gene
   cdr3_shared_ratio: 0.99    # Maximum allowed CDR3_shared_ratio
-  len_maxfreq_CDR3: 0.9      # Maximum allowed unique CDR3s with most common length
+  len_maxfreq_CDR3: 0.8      # Maximum allowed unique CDR3s with most common length
   unique_d_ratio: 0.3        # Minimum Ds_exact ratio between alleles
   unique_d_threshold: 10     # Check Ds_exact ratio only if highest-expressed allele has at least this Ds_exact count
-  max_db_diff: 15            # Maximum allowed database differences (negative is disabled)
+  max_db_diff: 5             # Maximum allowed database differences (negative is disabled)
   low_expressed:
     ['IGHV1-45','IGHV4-28','IGHV1-58',
      'IGHV3-64D','IGHV3-72','IGHV1-69-2']  # Typical low expressed genes in Human, use relaxed unique_js and unique_cdr3s as in pre_germline

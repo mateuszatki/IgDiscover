@@ -373,7 +373,7 @@ def main(args):
 			table = table[(table.has_stop == 0) | (table.whitelist_diff == 0)]
 		table = table[(table.cluster_size >= args.cluster_size) | (table.whitelist_diff == 0) | (select_low_expressed & (table.cluster_size >= config.pre_germline_filter['cluster_size']))]
 		# Filter with len-maxfreq-CDR3, except low expressed which tend to give high numbers for this criteria
-		table = table[(table.CDR3_len_maxfreq <= args.len_maxfreq_CDR3) | select_low_expressed]
+		table = table[(table.CDR3_len_maxfreq <= args.len_maxfreq_CDR3) | (select_low_expressed  & (table.CDR3_len_maxfreq <= config.pre_germline_filter['len_maxfreq_CDR3'])) ]
 
 		table['database_changes'].fillna('', inplace=True)
 		table = table.dropna()

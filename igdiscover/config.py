@@ -63,7 +63,7 @@ class Config:
 			clonotype_ratio=0.12,
 			exact_ratio=0.12,
 			cdr3_shared_ratio=0.8,
-			len_maxfreq_CDR3=1.0,
+			len_maxfreq_CDR3=0.9,
 			unique_d_ratio=0.3,
 			unique_d_threshold=10
 		)
@@ -78,7 +78,7 @@ class Config:
 			clonotype_ratio=0.12,
 			exact_ratio=0.12,
 			cdr3_shared_ratio=0.8,
-			len_maxfreq_CDR3=1.0,
+			len_maxfreq_CDR3=0.8,
 			unique_d_ratio=0.3,
 			unique_d_threshold=10
 		)
