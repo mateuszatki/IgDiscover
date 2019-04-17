@@ -359,12 +359,12 @@ def main(args):
 		table = table[table.database_diff >= args.minimum_db_diff]
 		if 'N_bases' in table.columns:
 			table = table[table.N_bases <= args.maximum_N]
-		if ('database_diff' in table.columns) and (args.maximum_db_diff > 0):
-			table = table[table.database_diff <= args.maximum_db_diff]
 		# If not first pre-filtering step and if low_expressed defined
 		select_low_expressed = table.any(axis=1)
 		if not pre and args.low_expressed:
                         select_low_expressed = table.name.apply(lambda s: (True & ('_S' not in s)) if low_expressed_regex.match(s) else False)
+		if ('database_diff' in table.columns) and (args.maximum_db_diff > 0):
+			table = table[~(select_low_expressed & (table.database_diff >= args.maximum_db_diff))]
                 # If second filtering step and gene in low expressed list, only first filtering applies
 		table = table.loc[((table.CDR3s_exact >= args.unique_CDR3) | (select_low_expressed & (table.CDR3s_exact >= config.pre_germline_filter['unique_cdr3s']))),:]
 		table = table[table.CDR3_shared_ratio <= args.cdr3_shared_ratio]
