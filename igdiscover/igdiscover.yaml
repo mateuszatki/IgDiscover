@@ -233,7 +233,7 @@ germline_filter:
   max_db_diff: 5             # Maximum allowed database differences (negative is disabled)
   low_expressed:
     ['IGHV1-45','IGHV4-28','IGHV1-58',
-     'IGHV3-64D','IGHV3-72','IGHV1-69-2']  # Typical low expressed genes in Human, use relaxed unique_js and unique_cdr3s as in pre_germline
+     'IGHV3-64D','IGHV3-72','IGHV1-69-2','IGHV2-70','IGHV2-70D']  # Typical low expressed genes in Human, use relaxed unique_js and unique_cdr3s as in pre_germline
 
 ## J discovery settings
 
