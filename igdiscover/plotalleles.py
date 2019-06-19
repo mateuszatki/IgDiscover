@@ -19,6 +19,7 @@ def add_arguments(parser):
 	arg('--database', metavar='FASTA',
 		help='Restrict plotting to the sequences named in the FASTA file. '
 		     'Only the sequence names are used!')
+	arg('--logscale', action='store_true')
 	arg('--multiple-x', action='store_true', default=False,
 		help='Allow multiple alleles on horizontal axes.'),
 	arg('--order', metavar='FASTA',
@@ -121,8 +122,14 @@ def main(args):
 	print('#\n# Allele-specific expression\n#')
 	if args.cfilter > 0:
 		fmatrix = matrix.apply(lambda x: (x/sum(x)) , axis=1)
-		matrix[fmatrix < args.cfilter] = np.nan
-	print(matrix.dropna(how='all'))
+		matrix[(fmatrix < args.cfilter) | fmatrix.isna()] = np.nan
+	matrix = matrix.dropna(how='all')
+	matrix[matrix.isna()] = 0
+	print(matrix)
+
+
+	if args.logscale:
+		matrix = np.log(matrix)
 
 	if len(alleles) == 2:
 		matrix.loc[:, alleles[1]] *= -1
@@ -134,6 +141,8 @@ def main(args):
 	ax.set_title('Allele-specific expression counts')
 	ax.set_xlabel(args.x + ' gene')
 	ax.set_ylabel('Count')
+	if args.logscale:
+		ax.set_ylabel('log(Count)')
 	ax.figure.set_tight_layout(True)
 	# ax.legend(bbox_to_anchor=(1.15, 0.5))
 	ax.figure.savefig(args.plot)
