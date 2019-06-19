@@ -6,7 +6,7 @@ import logging
 import pandas as pd
 from sqt import SequenceReader
 from .table import read_table
-
+import numpy as np
 logger = logging.getLogger(__name__)
 
 
@@ -27,6 +27,8 @@ def add_arguments(parser):
 		help='Type of gene on x axis. Default: %(default)s')
 	arg('--gene', choices=('V', 'D', 'J'), default='J',
 		help='Type of gene on y axis. Default: %(default)s')
+	arg('--cfilter', type=float, default=0,
+		help='Chromosome ratio filter to remove small count. Default: %(default)s')
 	arg('alleles', help='List of alleles to plot on y axis, separated by comma')
 	arg('table', help='Table with parsed and filtered IgBLAST results')
 	arg('plot', help='Path to output PDF or PNG')
@@ -117,7 +119,10 @@ def main(args):
 		del matrix['V_gene_tmp']
 
 	print('#\n# Allele-specific expression\n#')
-	print(matrix)
+	if args.cfilter > 0:
+		fmatrix = matrix.apply(lambda x: (x/sum(x)) , axis=1)
+		matrix[fmatrix < args.cfilter] = np.nan
+	print(matrix.dropna(how='all'))
 
 	if len(alleles) == 2:
 		matrix.loc[:, alleles[1]] *= -1
