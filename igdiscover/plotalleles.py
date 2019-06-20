@@ -122,14 +122,14 @@ def main(args):
 	print('#\n# Allele-specific expression\n#')
 	if args.cfilter > 0:
 		fmatrix = matrix.apply(lambda x: (x/sum(x)) , axis=1)
-		matrix[(fmatrix < args.cfilter) | fmatrix.isna()] = np.nan
+		matrix[(fmatrix < args.cfilter)] = np.nan
 	matrix = matrix.dropna(how='all')
 	matrix[matrix.isna()] = 0
 	print(matrix)
 
 
 	if args.logscale:
-		matrix = np.log(matrix)
+		matrix = (matrix + 1).apply(lambda x: np.log(x)) # log of zero, gives zero
 
 	if len(alleles) == 2:
 		matrix.loc[:, alleles[1]] *= -1
