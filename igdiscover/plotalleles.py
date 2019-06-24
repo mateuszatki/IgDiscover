@@ -30,10 +30,14 @@ def add_arguments(parser):
 		help='Type of gene on y axis. Default: %(default)s')
 	arg('--cfilter', type=float, default=0,
 		help='Chromosome ratio filter to remove small count. Default: %(default)s')
+	arg('--tsv', type=str, help='File to store plotallele counts in TSV format.')
 	arg('alleles', help='List of alleles to plot on y axis, separated by comma')
 	arg('table', help='Table with parsed and filtered IgBLAST results')
 	arg('plot', help='Path to output PDF or PNG')
 
+def only_numerics(seq):
+	seq_type= type(seq)
+	return seq_type().join(filter(seq_type.isdigit, seq))
 
 def main(args):
 	usecols = ['V_gene', 'D_gene', 'J_gene', 'V_errors', 'D_errors', 'J_errors', 'D_covered',
@@ -107,7 +111,7 @@ def main(args):
 
 		def orderfunc(full_name):
 			name, _, allele = full_name.split('_',1)[0].partition('*')
-			allele = int(allele)
+			allele = int(only_numerics(allele))
 			try:
 				index = gene_order[name]
 			except KeyError:
@@ -125,8 +129,10 @@ def main(args):
 		matrix[(fmatrix < args.cfilter)] = np.nan
 	matrix = matrix.dropna(how='all')
 	matrix[matrix.isna()] = 0
-	print(matrix)
-
+	if not args.tsv:
+                print(matrix)
+	else:
+                matrix.to_csv(args.tsv, sep='\t')
 
 	if args.logscale:
 		matrix = (matrix + 1).apply(lambda x: np.log(x)) # log of zero, gives zero
