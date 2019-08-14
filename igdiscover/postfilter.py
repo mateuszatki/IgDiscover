@@ -4,6 +4,13 @@ Filter V genes from germline.tab
 import pandas as pd
 import numpy as np
 import os.path
+import os
+
+def read_expected(fpath):
+    if os.path.isfile(fpath) and os.path.getsize(fpath) > 0:
+        return pd.read_csv(fpath,sep='\t', dtype=str)
+    else:
+        return pd.DataFrame.from_dict({'gene':[],'allele':[],'lower':[],'upper':[]})
 
 def add_arguments(parser):
 	arg = parser.add_argument
@@ -35,12 +42,12 @@ def main(args):
 
     if os.path.isfile(args.expected):
         # Load expected frequencies
-        table = pd.read_table(args.expected, dtype=str)
+        table = read_expected(args.expected)
         table[['lower','upper']] = table[['lower','upper']].astype(float)
 
         # Join by gene name (filter table)
         ftable = pd.merge(germline,table,left_on='gene',right_on='gene',how='left')
-        
+
         isnull = ftable.allele_x.isnull() | ftable.allele_y.isnull()
         # Check lower bound first for allele then for gene
         ftable.loc[~isnull & ~ftable.lower.isnull(),'keep'] = ftable.barcodes_exact_freq[~isnull] > ftable.lower[~isnull]
