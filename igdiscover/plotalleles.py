@@ -9,6 +9,11 @@ from .table import read_table
 import numpy as np
 logger = logging.getLogger(__name__)
 
+# Rename genes
+def rename(name):
+    name = name.replace("IGHV3-64*05","IGHV3-64D*05")
+    name = name.replace("IGHV2-70*04","IGHV2-70D*04")
+    return(name)
 
 def add_arguments(parser):
 	arg = parser.add_argument
@@ -30,6 +35,7 @@ def add_arguments(parser):
 		help='Type of gene on y axis. Default: %(default)s')
 	arg('--cfilter', type=float, default=0,
 		help='Chromosome ratio filter to remove small count. Default: %(default)s')
+	arg('--sfilter', type=str, help='File in TSV to extract alleles which require stricter filtering')
 	arg('--tsv', type=str, help='File to store plotallele counts in TSV format.')
 	arg('alleles', help='List of alleles to plot on y axis, separated by comma')
 	arg('table', help='Table with parsed and filtered IgBLAST results')
@@ -39,6 +45,20 @@ def only_numerics(seq):
 	seq_type= type(seq)
 	return seq_type().join(filter(seq_type.isdigit, seq))
 
+def filter_matrix(matrix, cutoff=0.15):
+    output = []
+    imatrix = matrix.assign(gene=matrix.V_gene.apply(lambda x: x.split('*',1)[0]))
+    for vgene, group in imatrix.groupby('gene'):
+        selcol = matrix.columns[1:3]
+        values=group[selcol]
+        freq = values / values.sum().sum()
+        newvalues = values * (~(freq < cutoff))
+        grp = group.copy()
+        grp[selcol] = newvalues
+        output.append(grp)
+    return pd.concat(output).drop('gene',axis=1)
+
+
 def main(args):
 	usecols = ['V_gene', 'D_gene', 'J_gene', 'V_errors', 'D_errors', 'J_errors', 'D_covered',
 		'D_evalue']
@@ -46,6 +66,8 @@ def main(args):
 	# Support reading a table without D_errors
 	try:
 		table = read_table(args.table, usecols=usecols)
+		# Rename genes according to rules
+		table = table.assign(V_gene=table.V_gene.apply(rename))
 	except ValueError:
 		usecols.remove('D_errors')
 		table = read_table(args.table, usecols=usecols)
@@ -67,7 +89,7 @@ def main(args):
 
 	gene1 = args.x + '_gene'
 	gene2 = args.gene + '_gene'
-	expression_counts = table.groupby((gene1, gene2)).size().to_frame().reset_index()
+	expression_counts = table.groupby([gene1, gene2]).size().to_frame().reset_index()
 	matrix = pd.DataFrame(
 		expression_counts.pivot(index=gene1, columns=gene2, values=0).fillna(0), dtype=int)
 	# matrix[v_gene,d_gene] gives co-occurrences of v_gene and d_gene
@@ -104,29 +126,35 @@ def main(args):
 			sys.exit(1)
 		matrix = matrix.loc[x_names, :]
 
+
 	if args.order:
 		with SequenceReader(args.order) as f:
-			ordered_names = [r.name.partition('*')[0] for r in f]
-		gene_order = {name: index for index, name in enumerate(ordered_names)}
-
-		def orderfunc(full_name):
-			name, _, allele = full_name.split('_',1)[0].partition('*')
-			allele = int(only_numerics(allele))
-			try:
-				index = gene_order[name]
-			except KeyError:
-				logger.warning('Gene name %s not found in %r, placing it at the end',
-					name, args.order)
-				index = 1000000
-			return index * 1000 + allele
-		matrix['V_gene_tmp'] = pd.Series(matrix.index, index=matrix.index).apply(orderfunc)
-		matrix.sort_values('V_gene_tmp', inplace=True)
-		del matrix['V_gene_tmp']
+			names = [r.name for r in f]
+		name_order = {name: index for index, name in enumerate(names)}
+		order = {}
+		for name in matrix.reset_index().V_gene:
+			base_name = name.rsplit('_',1)[0]
+			gene_name = name.rsplit('*',1)[0]
+			if base_name in name_order:
+                                order[name] = name_order[base_name]
+                                print("Allele name {} has order priority over gene name {}".format(name,gene_name))
+			elif gene_name in name_order:
+                                order[name] = name_order[gene_name]
+			else:
+                                print("Ordering not found for {}".format(name))
+		matrix = matrix.assign(sorting=order.values()).sort_values('sorting').drop('sorting',axis=1)
 
 	print('#\n# Allele-specific expression\n#')
 	if args.cfilter > 0:
-		fmatrix = matrix.apply(lambda x: (x/sum(x)) , axis=1)
+		fmatrix = matrix.apply(lambda x: x/(max(x)+1), axis=1)
 		matrix[(fmatrix < args.cfilter)] = np.nan
+		# Apply stricter filter to some alleles
+		if args.sfilter:
+			 names = read_table(args.sfilter)
+			 names['allele'] = names.name.apply(lambda x: x.rsplit('_',1)[0])
+			 select_rows = fmatrix.reset_index().V_gene.apply(lambda x: any([x.startswith(a) for a in names.allele])).values
+			 matrix[(fmatrix < 0.2).any(axis=1) & select_rows] = np.nan
+	matrix.to_csv('matrix.txt',sep='\t')
 	matrix = matrix.dropna(how='all')
 	matrix[matrix.isna()] = 0
 	if not args.tsv:
